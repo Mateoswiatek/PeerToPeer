@@ -2,7 +2,7 @@ package pl.agh.kernel.old;
 
 import java.math.BigInteger;
 
-public class Main {
+public class ExampleOld {
 
     public static void main(String[] args) {
         // Przykładowe użycie

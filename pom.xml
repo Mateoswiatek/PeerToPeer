@@ -21,22 +21,25 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Tyrus WebSocket API for server-side and client-side WebSocket support -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
 <!--        <dependency>-->
-<!--            <groupId>org.glassfish.tyrus.bundles</groupId>-->
-<!--            <artifactId>tyrus-standalone-client</artifactId>-->
-<!--            <version>2.2.0</version>-->
+<!--            <groupId>javax.json.bind</groupId>-->
+<!--            <artifactId>javax.json.bind-api</artifactId>-->
+<!--            <version>1.0</version>-->
 <!--        </dependency>-->
 <!--        <dependency>-->
-<!--            <groupId>org.glassfish.tyrus.bundles</groupId>-->
-<!--            <artifactId>tyrus-standalone-server</artifactId>-->
-<!--            <version>2.2.0</version>-->
+<!--            <groupId>org.eclipse</groupId>-->
+<!--            <artifactId>yasson</artifactId>-->
+<!--            <version>1.0.1</version>-->
 <!--        </dependency>-->
-
 <!--        <dependency>-->
-<!--            <groupId>org.eclipse.jetty.websocket</groupId>-->
-<!--            <artifactId>websocket-server</artifactId>-->
-<!--            <version>9.4.56.v20240826</version>-->
+<!--            <groupId>org.glassfish</groupId>-->
+<!--            <artifactId>javax.json</artifactId>-->
+<!--            <version>1.1.2</version>-->
 <!--        </dependency>-->
     </dependencies>
 

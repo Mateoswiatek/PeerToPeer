@@ -1,4 +1,4 @@
-package pl.agh.model.dto;
+package pl.agh.model.dto.request;
 
 public record NewTaskRequest(String passwordHash,
                              String alphabet,
