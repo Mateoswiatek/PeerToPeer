@@ -1,7 +1,11 @@
 package pl.agh.old;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -9,7 +13,7 @@ import java.util.stream.Collectors;
 public class NodeServer {
     private ServerSocket serverSocket;
 
-//    Listener / Observer ?
+    //    Listener / Observer ?
 //    TODO wielowątkowość - ogarnąć, aby nie było problemów z setami - usuwanie, dodawanie.
     private Set<Node> knownNodes; // Lista znanych węzłów (adres IP:port)
 
