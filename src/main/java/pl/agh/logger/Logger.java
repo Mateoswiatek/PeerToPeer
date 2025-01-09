@@ -21,7 +21,7 @@ public class Logger implements ILogger {
     }
 
     @Override
-    public void log(String level, String message) {
+    public void log(LogLevel level, String message) {
         String timestamp = getTimestamp();
         String logMessage = String.format("[%s] [%s] %s", timestamp, level, message);
 
@@ -36,15 +36,16 @@ public class Logger implements ILogger {
         return now.format(formatter);
     }
 
-    private void writeColoredLogToConsole(String level, String logMessage) {
+    private void writeColoredLogToConsole(LogLevel level, String logMessage) {
         System.out.println(getColoredLogMessage(level, logMessage));
     }
-    private String getColoredLogMessage(String level, String logMessage) {
+    private String getColoredLogMessage(LogLevel level, String logMessage) {
         String color = switch (level) {
-            case "INFO" -> "\033[32m";  // Green
-            case "WARN" -> "\033[33m";  // Yellow
-            case "ERROR" -> "\033[31m";  // Red
-            case "DEBUG" -> "\033[34m";  // Blue
+            case LogLevel.INFO -> "\033[32m";  // Green
+            case LogLevel.WARN -> "\033[33m";  // Yellow
+            case LogLevel.ERROR -> "\033[31m";  // Red
+            case LogLevel.DEBUG -> "\033[34m";  // Blue
+            case LogLevel.TRACE -> "\033[36m";  // Cyan
             default -> "\033[0m";  // Default (no color)
         };
 
@@ -62,21 +63,26 @@ public class Logger implements ILogger {
 
     @Override
     public void info(String message) {
-        log("INFO", message);
+        log(LogLevel.INFO, message);
     }
 
     @Override
     public void warn(String message) {
-        log("WARN", message);
+        log(LogLevel.WARN, message);
     }
 
     @Override
     public void error(String message) {
-        log("ERROR", message);
+        log(LogLevel.ERROR, message);
     }
 
     @Override
     public void debug(String message) {
-        log("DEBUG", message);
+        log(LogLevel.DEBUG, message);
+    }
+
+    @Override
+    public void trace(String message) {
+        log(LogLevel.TRACE, message);
     }
 }
