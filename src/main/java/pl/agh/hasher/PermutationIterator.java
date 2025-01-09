@@ -1,21 +1,42 @@
 package pl.agh.hasher;
 
-public class PermutationIterator {
-    private static char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray(); // Alfabet
-    private static int maxLength = 3; // Maksymalna długość hasła
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-    public static void main(String[] args) {
-        int startIndex = 400;
-        int endIndex = 500;
+public class PermutationIterator implements Iterator<String> {
 
-        for (int i = startIndex; i <= endIndex; i++) {
-            String password = getPermutationAtIndex(i, maxLength, alphabet);
-            System.out.println("Permutacja " + i + ": " + password);
+    private int currentIndex;
+    private final int endIndex;
+    private final int maxLength;
+    private final char[] alphabet;
+
+    public PermutationIterator(int startIndex, int endIndex, int maxLength, char[] alphabet) {
+        this.currentIndex = startIndex;
+        this.endIndex = endIndex;
+        this.maxLength = maxLength;
+        this.alphabet = alphabet;
+    }
+
+    // Sprawdza, czy są jeszcze permutacje do przetworzenia
+    @Override
+    public boolean hasNext() {
+        return currentIndex <= endIndex;
+    }
+
+    // Zwraca następną permutację
+    @Override
+    public String next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException("Brak więcej permutacji w zakresie");
         }
+
+        String password = getPermutationAtIndex(currentIndex, maxLength, alphabet);
+        currentIndex++;
+        return password;
     }
 
     // Funkcja do uzyskania permutacji na podstawie numeru
-    public static String getPermutationAtIndex(int index, int length, char[] alphabet) {
+    private String getPermutationAtIndex(int index, int length, char[] alphabet) {
         int base = alphabet.length;
         char[] result = new char[length];
 
