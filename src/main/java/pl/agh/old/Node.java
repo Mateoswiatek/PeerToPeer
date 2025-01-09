@@ -1,4 +1,4 @@
-package pl.agh;
+package pl.agh.old;
 
 import lombok.Data;
 

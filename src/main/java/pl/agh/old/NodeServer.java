@@ -1,6 +1,4 @@
-package pl.agh;
-
-import lombok.extern.slf4j.Slf4j;
+package pl.agh.old;
 
 import java.io.*;
 import java.net.*;
