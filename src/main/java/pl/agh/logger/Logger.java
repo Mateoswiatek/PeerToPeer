@@ -21,7 +21,7 @@ public class Logger implements ILogger {
     }
 
     @Override
-    public synchronized void log(String level, String message) {
+    public void log(String level, String message) {
         String timestamp = getTimestamp();
         String logMessage = String.format("[%s] [%s] %s", timestamp, level, message);
 
@@ -40,23 +40,13 @@ public class Logger implements ILogger {
         System.out.println(getColoredLogMessage(level, logMessage));
     }
     private String getColoredLogMessage(String level, String logMessage) {
-        String color;
-        switch (level) {
-            case "INFO":
-                color = "\033[32m";  // Green
-                break;
-            case "WARN":
-                color = "\033[33m";  // Yellow
-                break;
-            case "ERROR":
-                color = "\033[31m";  // Red
-                break;
-            case "DEBUG":
-                color = "\033[34m";  // Blue
-                break;
-            default:
-                color = "\033[0m";  // Default (no color)
-        }
+        String color = switch (level) {
+            case "INFO" -> "\033[32m";  // Green
+            case "WARN" -> "\033[33m";  // Yellow
+            case "ERROR" -> "\033[31m";  // Red
+            case "DEBUG" -> "\033[34m";  // Blue
+            default -> "\033[0m";  // Default (no color)
+        };
 
         return color + logMessage + "\033[0m";
     }
