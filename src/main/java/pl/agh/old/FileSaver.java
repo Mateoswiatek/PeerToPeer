@@ -1,6 +1,8 @@
 package pl.agh.old;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 // Różne implementacje, rodzaje, tutaj może strategię zrobimy ???
 

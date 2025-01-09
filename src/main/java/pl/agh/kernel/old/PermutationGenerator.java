@@ -49,7 +49,6 @@ public class PermutationGenerator {
     }
 
 
-
 //    public Iterable<String> getPermutationsInRange(BigInteger start, BigInteger end) {
 //        return () -> new Iterator<>() {
 //            private BigInteger currentIndex = start;
