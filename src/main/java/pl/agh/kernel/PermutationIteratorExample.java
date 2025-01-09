@@ -1,4 +1,4 @@
-package pl.agh.hasher;
+package pl.agh.kernel;
 
 import java.math.BigInteger;
 
