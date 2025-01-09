@@ -1,0 +1,25 @@
+{
+  "batches": {
+    "64335c7e-XXXX-XXXX-XXXX-f0a1bf448000": {
+      "taskId": "64335c7e-5825-4966-ba54-f0a1bf448f43",
+      "id": "64335c7e-XXXX-XXXX-XXXX-f0a1bf448000",
+      "min": "0",
+      "max": "100",
+      "status": "DONE"
+    },
+    "64335c7e-XXXX-XXXX-XXXX-f0a1bf448001": {
+      "taskId": "64335c7e-5825-4966-ba54-f0a1bf448f43",
+      "id": "64335c7e-XXXX-XXXX-XXXX-f0a1bf448001",
+      "min": "101",
+      "max": "200",
+      "status": "BOOKED"
+    },
+    "64335c7e-XXXX-XXXX-XXXX-f0a1bf448002": {
+      "taskId": "64335c7e-5825-4966-ba54-f0a1bf448f43",
+      "id": "64335c7e-XXXX-XXXX-XXXX-f0a1bf448002",
+      "min": "201",
+      "max": "300",
+      "status": "NOT_DONE"
+    }
+  }
+}

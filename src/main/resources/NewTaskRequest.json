@@ -1,0 +1,7 @@
+{
+  "type": "NewTaskRequest",
+  "passwordHash": "abc123321",
+  "alphabet": "abcdefghijklmnopqrstuvwxyz123",
+  "maxLength": 10,
+  "maxBatchSize": 5000
+}

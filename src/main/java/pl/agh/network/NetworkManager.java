@@ -48,5 +48,4 @@ public class NetworkManager {
         updateNetworkMessage.getNodes().remove(myself);
         nodes.addAll(updateNetworkMessage.getNodes());
     }
-
 }

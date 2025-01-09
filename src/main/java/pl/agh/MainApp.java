@@ -1,5 +1,8 @@
 package pl.agh;
 
+import pl.agh.kernel.TaskController;
+import pl.agh.kernel.TaskService;
+import pl.agh.kernel.impl.InMemoryBatchRepository;
 import pl.agh.model.Node;
 import pl.agh.network.NetworkManager;
 import pl.agh.network.TCPListener;
@@ -22,9 +25,9 @@ public class MainApp {
         }
 
         Node myself = new Node(UUID.randomUUID(), "localhost", Integer.parseInt(args[0]));
-
+        TaskController taskController = new TaskController(new TaskService(InMemoryBatchRepository.getInstance()));
         NetworkManager networkManager = new NetworkManager(myself);
-        new TCPListener(networkManager, myself).startAsync();
+        new TCPListener(networkManager, taskController, myself).startAsync();
 
         if (args.length == 3) { // Czy podłączamy się do sieci, czy jest to pierwszy node
             networkManager.connectMyselfToNetwork(args[1], Integer.parseInt(args[2]));

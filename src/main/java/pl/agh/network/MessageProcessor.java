@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import pl.agh.model.dto.BaseMessage;
 import pl.agh.model.dto.message.UpdateNetworkMessage;
 import pl.agh.model.dto.request.JoinToNetworkRequest;
+import pl.agh.model.dto.request.NewTaskRequest;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MessageProcessor {
@@ -20,6 +21,7 @@ public class MessageProcessor {
         return switch (type) {
             case "JoinToNetworkRequest" -> objectMapper.treeToValue(jsonNode, JoinToNetworkRequest.class);
             case "UpdateNetworkMessage" -> objectMapper.treeToValue(jsonNode, UpdateNetworkMessage.class);
+            case "NewTaskRequest" -> objectMapper.treeToValue(jsonNode, NewTaskRequest.class);
             default -> throw new IllegalArgumentException("Nieznany typ wiadomości: " + type);
         };
     }
