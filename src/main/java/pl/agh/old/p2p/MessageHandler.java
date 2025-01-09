@@ -1,4 +1,4 @@
-package pl.agh.p2p;
+package pl.agh.old.p2p;
 
 import java.io.PrintWriter;
 
