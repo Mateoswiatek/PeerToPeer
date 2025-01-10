@@ -1,11 +1,10 @@
 package pl.agh;
 
-import pl.agh.kernel.TaskController;
-import pl.agh.kernel.TaskService;
-import pl.agh.kernel.impl.InMemoryBatchRepository;
-import pl.agh.model.Node;
-import pl.agh.network.NetworkManager;
-import pl.agh.network.TCPListener;
+import pl.agh.task.TaskControllerImpl;
+import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
+import pl.agh.p2pnetwork.model.Node;
+import pl.agh.p2pnetwork.NetworkManager;
+import pl.agh.p2pnetwork.TCPListener;
 
 import java.util.UUID;
 
@@ -25,7 +24,7 @@ public class MainApp {
         }
 
         Node myself = new Node(UUID.randomUUID(), "localhost", Integer.parseInt(args[0]));
-        TaskController taskController = new TaskController(new TaskService(InMemoryBatchRepository.getInstance()));
+        TaskControllerImpl taskController = new TaskControllerImpl(InMemoryBatchRepositoryAdapter.getInstance());
         NetworkManager networkManager = new NetworkManager(myself);
         new TCPListener(networkManager, taskController, myself).startAsync();
 

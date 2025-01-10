@@ -26,7 +26,13 @@
             <artifactId>jackson-databind</artifactId>
             <version>2.15.2</version>
         </dependency>
-<!--        <dependency>-->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <!--        <dependency>-->
 <!--            <groupId>javax.json.bind</groupId>-->
 <!--            <artifactId>javax.json.bind-api</artifactId>-->
 <!--            <version>1.0</version>-->
