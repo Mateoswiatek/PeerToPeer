@@ -10,6 +10,7 @@ import pl.agh.p2pnetwork.model.Node;
 import pl.agh.p2pnetwork.model.dto.BaseMessage;
 import pl.agh.p2pnetwork.model.dto.message.UpdateNetworkMessage;
 import pl.agh.p2pnetwork.model.dto.request.JoinToNetworkRequest;
+import pl.agh.task.model.Task;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -114,7 +115,16 @@ public class TCPListener {
     }
 
     private void handleNewTaskFromNetwork(TaskFromNetworkMessage newTaskRequestFromNetwork) {
-        taskController.createNewTaskFromNetwork(TaskMapper.toTask(newTaskRequestFromNetwork));
+        try {
+            Task task = TaskMapper.toTask(newTaskRequestFromNetwork);
+
+            taskController.createNewTaskFromNetwork(task);
+
+            System.out.println("Pomyślnie obsłużono nowe zadanie z sieci: " + task.getTaskId());
+        } catch (Exception e) {
+            System.err.println("Błąd podczas obsługi nowego zadania z sieci: " + e.getMessage());
+        }
     }
+
 
 }

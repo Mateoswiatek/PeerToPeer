@@ -18,6 +18,7 @@ import pl.agh.task.ports.outbound.TaskRepositoryPort;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @AllArgsConstructor
 public class TaskControllerImpl implements TaskController {
@@ -60,23 +61,25 @@ public class TaskControllerImpl implements TaskController {
         batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
 
         UUID taskId = batchUpdateMessage.getTaskId();
-        TaskThread taskThread = taskThreads.get(batchUpdateMessage.getTaskId());
-        if(taskThread != null) {
-            if(taskThread.getCurrentBatch().getBatchId().equals(batchUpdateMessage.getBatchId())
+        TaskThread taskThread = taskThreads.get(taskId);
+
+        if (taskThread != null) {
+            if (taskThread.getCurrentBatch().getBatchId().equals(batchUpdateMessage.getBatchId())
                     && batchUpdateMessage.getBatchStatus().equals(BatchStatus.DONE)) {
 
-                taskRepositoryPort.getById(taskId).ifPresent(task -> {task.complete(batchUpdateMessage.getResult());});
+                taskRepositoryPort.getById(taskId).ifPresent(task -> {
+                    task.complete(batchUpdateMessage.getResult());
+                    taskRepositoryPort.save(task); // Ensure task state is persisted.
+                });
 
-                this.stopTask(taskThread);
-                this.startTask(taskId);
-            }
-
-            if(!batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
-                this.stopTask(taskId);
+                stopTask(taskThread);
+                startTask(taskId); // Start a new task batch.
+            } else if (batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
+                stopTask(taskThread); // Stop task if solution is found.
             }
         }
-//        Można by tworzyć nowe
     }
+
 
 
 //     * Jeśli taskId jest nullem, to zakładamy, że jest to nowe zadanie i należy je rozesłać, jeśli ma uuid, to oznacza,
@@ -87,17 +90,31 @@ public class TaskControllerImpl implements TaskController {
      * @param newTaskRequest
      * @return
      */
+//    public UUID createNewTask(NewTaskDto newTaskRequest) {
+//        Task task = taskRepositoryPort.save(Task.fromNewTaskRequest(newTaskRequest, TaskStatus.CREATED));
+//
+//        taskMessagePort.sendTaskUpdateMessage(task);
+//        // Service
+//        return this.createTask(task);
+//    }
+
     public UUID createNewTask(NewTaskDto newTaskRequest) {
         Task task = taskRepositoryPort.save(Task.fromNewTaskRequest(newTaskRequest, TaskStatus.CREATED));
 
-        taskMessagePort.sendTaskUpdateMessage(task);
-        // Service
+        CompletableFuture.runAsync(() -> taskMessagePort.sendTaskUpdateMessage(task));
+
         return this.createTask(task);
     }
 
+//    public void createNewTaskFromNetwork(Task task) {
+//        taskRepositoryPort.save(task);
+//        this.createTask(task);
+//    }
+
     public void createNewTaskFromNetwork(Task task) {
         taskRepositoryPort.save(task);
-        this.createTask(task);
+
+        CompletableFuture.runAsync(() -> this.createTask(task));
     }
 
     private UUID createTask(Task task) {
