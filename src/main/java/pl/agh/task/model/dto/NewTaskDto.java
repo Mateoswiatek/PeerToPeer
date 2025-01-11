@@ -3,6 +3,7 @@ package pl.agh.task.model.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import pl.agh.task.model.enumerated.TaskStatus;
 
 @Data
 @Builder
@@ -12,4 +13,5 @@ public class NewTaskDto {
     private final String alphabet;
     private final Long maxLength;
     private final Long maxBatchSize;
+    private final TaskStatus taskStatus;
 }

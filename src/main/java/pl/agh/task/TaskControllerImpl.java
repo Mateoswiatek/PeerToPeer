@@ -6,6 +6,7 @@ import pl.agh.mapper.TaskMapper;
 import pl.agh.middleware.model.MemoryDumpMessage;
 import pl.agh.middleware.model.TaskFromNetworkMessage;
 import pl.agh.p2pnetwork.NetworkManager;
+import pl.agh.task.factory.TaskFactory;
 import pl.agh.task.impl.SHA256TaskExecutionStrategy;
 import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.model.Batch;
@@ -31,6 +32,7 @@ public class TaskControllerImpl implements TaskController {
     private final TaskRepositoryPort taskRepositoryPort;
     private final TaskMessageSenderPort taskMessagePort;
     private final NetworkManager networkManager;
+    private final TaskFactory taskFactory;
 
     private final Random random = new Random();
     private Map<UUID, TaskThread> taskThreads = new HashMap<>();
@@ -112,7 +114,9 @@ public class TaskControllerImpl implements TaskController {
 
     public UUID createNewTask(NewTaskDto newTaskRequest) {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy(); // Przypisanie strategii
-        Task task = taskRepositoryPort.save(Task.fromNewTaskRequest(newTaskRequest, TaskStatus.CREATED, strategy));
+
+        Task task = taskFactory.createTask(newTaskRequest, strategy);
+        taskRepositoryPort.save(task);
 
         TaskStatusLogger loggerObserver = new TaskStatusLogger();
         task.addObserver(loggerObserver);
