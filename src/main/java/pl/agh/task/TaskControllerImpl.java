@@ -152,12 +152,18 @@ public class TaskControllerImpl implements TaskController {
         taskThreads.computeIfAbsent(
                 taskId,
                 newThreadTaskId -> {
-                    TaskThread taskThread = new TaskThread(this::getNextBatch, this::callbackBatchUpdate, taskId);
+                    TaskThread taskThread = new TaskThread(
+                            this::getNextBatch,
+                            this::callbackBatchUpdate,
+                            id -> taskRepositoryPort.getById(id).orElseThrow(() -> new RuntimeException("Task not found")),
+                            taskId
+                    );
                     Thread thread = new Thread(taskThread);
                     thread.start();
                     return taskThread;
                 });
     }
+
 
     public void stopTask(UUID taskId) {
         taskThreads.get(taskId).stopTask();
