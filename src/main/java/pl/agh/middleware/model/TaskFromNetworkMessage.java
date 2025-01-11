@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import pl.agh.p2pnetwork.model.dto.BaseMessage;
+import pl.agh.task.model.Task;
 import pl.agh.task.model.enumerated.TaskStatus;
 
 import java.util.UUID;
@@ -37,5 +38,16 @@ public class TaskFromNetworkMessage extends BaseMessage {
         this.maxBatchSize = maxBatchSize;
         this.taskStatus = taskStatus;
         this.result = result;
+    }
+
+    public TaskFromNetworkMessage(Task task) {
+        super(TaskFromNetworkMessage.class.getSimpleName());
+        this.taskId = task.getTaskId();
+        this.passwordHash = task.getPasswordHash();
+        this.alphabet = task.getAlphabet();
+        this.maxLength = task.getMaxLength();
+        this.maxBatchSize = task.getMaxBatchSize();
+        this.taskStatus = task.getTaskStatus();
+        this.result = task.getResult();
     }
 }

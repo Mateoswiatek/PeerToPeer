@@ -1,5 +1,6 @@
 package pl.agh.mapper;
 
+import pl.agh.middleware.model.BatchUpdateMessage;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.dto.BatchUpdateDto;
 
@@ -23,5 +24,14 @@ public class BatchMapper {
                 null, // Brak danych dla `max`
                 batchUpdateDto.getBatchStatus()
         );
+    }
+
+    public static BatchUpdateDto messageToBatchUpdateDto(BatchUpdateMessage batchUpdateMessage) {
+        return BatchUpdateDto.builder()
+                .taskId(batchUpdateMessage.getTaskId())
+                .batchId(batchUpdateMessage.getBatchId())
+                .batchStatus(batchUpdateMessage.getBatchStatus())
+                .result(batchUpdateMessage.getResult())
+                .build();
     }
 }

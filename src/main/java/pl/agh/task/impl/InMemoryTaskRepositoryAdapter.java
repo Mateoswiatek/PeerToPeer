@@ -25,7 +25,7 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
 
     @Override
     public Task save(Task task) {
-        if (tasks.containsKey(task.getTaskId())) {
+        if (task.getTaskId() != null && tasks.containsKey(task.getTaskId())) {
             tasks.put(task.getTaskId(), task);
             return task;
         } else {

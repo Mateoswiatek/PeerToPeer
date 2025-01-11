@@ -1,5 +1,6 @@
 package pl.agh;
 
+import pl.agh.p2pnetwork.TCPSender;
 import pl.agh.task.TaskControllerImpl;
 import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
 import pl.agh.p2pnetwork.model.Node;
@@ -28,13 +29,15 @@ public class MainApp {
 
         Node myself = new Node(UUID.randomUUID(), "localhost", Integer.parseInt(args[0]));
 
+        NetworkManager networkManager = new NetworkManager(myself);
+
         TaskControllerImpl taskController = new TaskControllerImpl(
                 InMemoryBatchRepositoryAdapter.getInstance(),
                 InMemoryTaskRepositoryAdapter.getInstance(),
                 TaskMessageSenderPortImpl.getInstance(),
+                networkManager,
                 new HashMap<>());
 
-        NetworkManager networkManager = new NetworkManager(myself);
 
         new TCPListener(networkManager, taskController, myself).startAsync();
 
@@ -43,7 +46,5 @@ public class MainApp {
         } else {
             System.out.println("Its first node in the network");
         }
-
-
     }
 }

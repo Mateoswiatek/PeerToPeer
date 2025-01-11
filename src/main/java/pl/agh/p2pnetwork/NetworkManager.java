@@ -1,5 +1,6 @@
 package pl.agh.p2pnetwork;
 
+import lombok.Getter;
 import pl.agh.p2pnetwork.model.Node;
 import pl.agh.p2pnetwork.model.dto.message.UpdateNetworkMessage;
 import pl.agh.p2pnetwork.model.dto.request.JoinToNetworkRequest;
@@ -9,6 +10,7 @@ import java.util.Set;
 
 public class NetworkManager {
     Node myself;
+    @Getter
     Set<Node> nodes = new HashSet<>();
 
     public NetworkManager(Node myself) {

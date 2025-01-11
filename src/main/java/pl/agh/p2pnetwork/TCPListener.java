@@ -2,7 +2,9 @@ package pl.agh.p2pnetwork;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import pl.agh.mapper.BatchMapper;
 import pl.agh.mapper.TaskMapper;
+import pl.agh.middleware.model.BatchUpdateMessage;
 import pl.agh.middleware.model.NewTaskRequest;
 import pl.agh.middleware.model.TaskFromNetworkMessage;
 import pl.agh.task.TaskControllerImpl;
@@ -68,6 +70,7 @@ public class TCPListener {
         ) {
             String message;
             while ((message = in.readLine()) != null) {
+                System.out.println("Handle client, message: " + message);
                 BaseMessage myMessage = MessageProcessor.parseMessage(message);
 
                 switch (myMessage) {
@@ -81,10 +84,12 @@ public class TCPListener {
                         out.println(taskId.toString());
                     }
                     case TaskFromNetworkMessage newTaskFromNetwork -> handleNewTaskFromNetwork(newTaskFromNetwork);
+                    case BatchUpdateMessage newBatchUpdateMessage -> handleBatchUpdateMessage(newBatchUpdateMessage);
                     default -> System.out.println("Nieobsługiwany typ wiadomości: " + myMessage.getClass().getSimpleName());
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
             System.err.println("Błąd obsługi klienta: " + e.getMessage());
         } finally {
             try {
@@ -110,6 +115,7 @@ public class TCPListener {
 
     private UUID handleNewTaskRequest(NewTaskRequest newTaskRequest) {
         UUID taskId = taskController.createNewTask(TaskMapper.toDto(newTaskRequest));
+        System.out.println("New task id: " + taskId);
         taskController.startTask(taskId);
         return taskId;
     }
@@ -120,10 +126,16 @@ public class TCPListener {
 
             taskController.createNewTaskFromNetwork(task);
 
+            // TODO start task???
+
             System.out.println("Pomyślnie obsłużono nowe zadanie z sieci: " + task.getTaskId());
         } catch (Exception e) {
             System.err.println("Błąd podczas obsługi nowego zadania z sieci: " + e.getMessage());
         }
+    }
+
+    private void handleBatchUpdateMessage(BatchUpdateMessage newBatchUpdateMessage) {
+        taskController.receiveBatchUpdateMessage(BatchMapper.messageToBatchUpdateDto(newBatchUpdateMessage));
     }
 
 

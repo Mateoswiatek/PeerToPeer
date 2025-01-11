@@ -30,7 +30,7 @@ public class TCPSender {
             OutputStream outputStream = socket.getOutputStream();
             PrintWriter writer = new PrintWriter(outputStream, true);
             writer.println(jsonMessage);
-            System.out.println("Wysłano request do " + ip + ":" + port);
+            System.out.println("Wysłano request do " + ip + ":" + port + "message: " + jsonMessage);
         } catch (Exception e) {
             throw new RuntimeException("ip: " + ip + " port: " + port + " " + e.getMessage());
         }
