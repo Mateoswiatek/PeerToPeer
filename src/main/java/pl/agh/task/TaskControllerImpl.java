@@ -5,6 +5,8 @@ import pl.agh.mapper.BatchMapper;
 import pl.agh.mapper.TaskMapper;
 import pl.agh.middleware.model.MemoryDumpMessage;
 import pl.agh.middleware.model.TaskFromNetworkMessage;
+import pl.agh.task.impl.SHA256TaskExecutionStrategy;
+import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.enumerated.BatchStatus;
 import pl.agh.task.model.dto.BatchUpdateDto;
@@ -58,27 +60,34 @@ public class TaskControllerImpl implements TaskController {
      * @param batchUpdateMessage
      */
     public void receiveBatchUpdateMessage(BatchUpdateDto batchUpdateMessage) {
+        // Zaktualizuj status batcha w repozytorium
         batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
 
         UUID taskId = batchUpdateMessage.getTaskId();
         TaskThread taskThread = taskThreads.get(taskId);
 
         if (taskThread != null) {
-            if (taskThread.getCurrentBatch().getBatchId().equals(batchUpdateMessage.getBatchId())
-                    && batchUpdateMessage.getBatchStatus().equals(BatchStatus.DONE)) {
-
+            if (batchUpdateMessage.getBatchStatus().equals(BatchStatus.DONE)) {
                 taskRepositoryPort.getById(taskId).ifPresent(task -> {
-                    task.complete(batchUpdateMessage.getResult());
-                    taskRepositoryPort.save(task); // Ensure task state is persisted.
+                    if (batchRepository.findAllByStatusAndTaskId(BatchStatus.NOT_DONE, taskId).isEmpty()) {
+                        task.complete(batchUpdateMessage.getResult());
+                        taskRepositoryPort.save(task);
+                    }
                 });
 
                 stopTask(taskThread);
-                startTask(taskId); // Start a new task batch.
-            } else if (batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
-                stopTask(taskThread); // Stop task if solution is found.
+                startTask(taskId);
+            }
+            else if (batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
+                taskRepositoryPort.getById(taskId).ifPresent(task -> {
+                    task.complete(batchUpdateMessage.getResult());
+                    taskRepositoryPort.save(task);
+                });
+                stopTask(taskThread);
             }
         }
     }
+
 
 
 
@@ -99,10 +108,10 @@ public class TaskControllerImpl implements TaskController {
 //    }
 
     public UUID createNewTask(NewTaskDto newTaskRequest) {
-        Task task = taskRepositoryPort.save(Task.fromNewTaskRequest(newTaskRequest, TaskStatus.CREATED));
+        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy(); // Przypisanie strategii
+        Task task = taskRepositoryPort.save(Task.fromNewTaskRequest(newTaskRequest, TaskStatus.CREATED, strategy));
 
         CompletableFuture.runAsync(() -> taskMessagePort.sendTaskUpdateMessage(task));
-
         return this.createTask(task);
     }
 
@@ -155,14 +164,18 @@ public class TaskControllerImpl implements TaskController {
                     TaskThread taskThread = new TaskThread(
                             this::getNextBatch,
                             this::callbackBatchUpdate,
-                            id -> taskRepositoryPort.getById(id).orElseThrow(() -> new RuntimeException("Task not found")),
-                            taskId
+                            id -> taskRepositoryPort.getById(id)
+                                    .orElseThrow(() -> new RuntimeException("Task not found")), // Funkcja dostarczająca Task
+                            taskId // ID zadania
                     );
+
                     Thread thread = new Thread(taskThread);
                     thread.start();
                     return taskThread;
                 });
     }
+
+
 
 
     public void stopTask(UUID taskId) {
