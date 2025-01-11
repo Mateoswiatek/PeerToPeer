@@ -14,6 +14,7 @@ import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.enumerated.TaskStatus;
+import pl.agh.task.observer.TaskStatusLogger;
 import pl.agh.task.ports.inbound.TaskController;
 import pl.agh.task.ports.outbound.BatchRepositoryPort;
 import pl.agh.task.ports.outbound.TaskMessageSenderPort;
@@ -113,6 +114,9 @@ public class TaskControllerImpl implements TaskController {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy(); // Przypisanie strategii
         Task task = taskRepositoryPort.save(Task.fromNewTaskRequest(newTaskRequest, TaskStatus.CREATED, strategy));
 
+        TaskStatusLogger loggerObserver = new TaskStatusLogger();
+        task.addObserver(loggerObserver);
+
         CompletableFuture.runAsync(() -> taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), task));
 
         return this.createTask(task);
@@ -125,6 +129,9 @@ public class TaskControllerImpl implements TaskController {
 
     public void createNewTaskFromNetwork(Task task) {
         taskRepositoryPort.save(task);
+
+        TaskStatusLogger loggerObserver = new TaskStatusLogger();
+        task.addObserver(loggerObserver);
 
         CompletableFuture.runAsync(() -> this.createTask(task));
     }

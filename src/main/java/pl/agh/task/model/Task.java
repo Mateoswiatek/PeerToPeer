@@ -6,6 +6,8 @@ import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.enumerated.TaskStatus;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -19,6 +21,8 @@ public class Task {
     private TaskStatus taskStatus;
     private String result = "";
     private TaskExecutionStrategy strategy;
+
+    private final List<TaskObserver> observers = new ArrayList<>(); // Lista obserwatorów
 
     public static Task fromNewTaskRequest(NewTaskDto newTaskRequest, TaskStatus taskStatus, TaskExecutionStrategy strategy) {
         return Task.builder()
@@ -34,6 +38,7 @@ public class Task {
     public void complete(String result) {
         this.result = result;
         this.taskStatus = TaskStatus.DONE;
+        notifyObservers(); // Powiadom obserwatorów o zmianie
     }
 
     public void execute(Batch batch) {
@@ -41,6 +46,20 @@ public class Task {
             strategy.execute(this, batch); // Wywołanie strategii z batch
         } else {
             throw new IllegalStateException("Brak strategii wykonania dla zadania.");
+        }
+    }
+
+    public void addObserver(TaskObserver observer) {
+        observers.add(observer);
+    }
+
+    public void removeObserver(TaskObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void notifyObservers() {
+        for (TaskObserver observer : observers) {
+            observer.onTaskStatusChanged(this);
         }
     }
 }
