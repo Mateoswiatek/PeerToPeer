@@ -5,7 +5,10 @@ import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
 import pl.agh.p2pnetwork.model.Node;
 import pl.agh.p2pnetwork.NetworkManager;
 import pl.agh.p2pnetwork.TCPListener;
+import pl.agh.task.impl.InMemoryTaskRepositoryAdapter;
+import pl.agh.task.impl.TaskMessageSenderPortImpl;
 
+import java.util.HashMap;
 import java.util.UUID;
 
 public class MainApp {
@@ -24,8 +27,15 @@ public class MainApp {
         }
 
         Node myself = new Node(UUID.randomUUID(), "localhost", Integer.parseInt(args[0]));
-        TaskControllerImpl taskController = new TaskControllerImpl(InMemoryBatchRepositoryAdapter.getInstance());
+
+        TaskControllerImpl taskController = new TaskControllerImpl(
+                InMemoryBatchRepositoryAdapter.getInstance(),
+                InMemoryTaskRepositoryAdapter.getInstance(),
+                TaskMessageSenderPortImpl.getInstance(),
+                new HashMap<>());
+
         NetworkManager networkManager = new NetworkManager(myself);
+
         new TCPListener(networkManager, taskController, myself).startAsync();
 
         if (args.length == 3) { // Czy podłączamy się do sieci, czy jest to pierwszy node
