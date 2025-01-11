@@ -2,6 +2,7 @@ package pl.agh.task.impl;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import pl.agh.logger.Logger;
 import pl.agh.task.ports.outbound.BatchRepositoryPort;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.enumerated.BatchStatus;
@@ -13,6 +14,8 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class InMemoryBatchRepositoryAdapter implements BatchRepositoryPort {
     private final Map<UUID, Map<Long, Batch>> taskIdIndex = new ConcurrentHashMap<>();
+
+    private final Logger logger = Logger.getInstance();
 
     // Klasa wewnętrzna, która trzyma jedyną instancję Singletona
     private static class SingletonHolder {
@@ -69,7 +72,10 @@ public class InMemoryBatchRepositoryAdapter implements BatchRepositoryPort {
     public void updateStatus(UUID taskId, Long id, BatchStatus status) {
         findByTaskIdAndBatchId(taskId, id).ifPresentOrElse(
                 batch -> batch.setStatus(status),
-                () -> { throw new RuntimeException("Batch not found for id: " + id); }
+                () -> {
+                    logger.error("Batch not found for id: " + id);
+//                    throw new RuntimeException("Batch not found for id: " + id);
+                }
         );
     }
 

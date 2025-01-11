@@ -2,6 +2,7 @@ package pl.agh.task.impl;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import pl.agh.logger.Logger;
 import pl.agh.task.model.Task;
 import pl.agh.task.ports.outbound.TaskRepositoryPort;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
     private final Map<UUID, Task> tasks = new ConcurrentHashMap<>();
+    private final Logger logger = Logger.getInstance();
 
     private static class SingletonHolder {
         private static final InMemoryTaskRepositoryAdapter INSTANCE = new InMemoryTaskRepositoryAdapter();
@@ -25,7 +27,9 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
 
     @Override
     public Task save(Task task) {
+        logger.info("Save task to repository...");
         if (task.getTaskId() != null && tasks.containsKey(task.getTaskId())) {
+            logger.info("Task has ID, save it to MAP");
             tasks.put(task.getTaskId(), task);
             return task;
         } else {
@@ -41,6 +45,7 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
                     .result(task.getResult())
                     .build();
 
+            logger.info("Task has no ID, put task with random ID: " + taskId);
             tasks.put(taskId, task);
             return newTask;
         }

@@ -1,6 +1,7 @@
 package pl.agh.p2pnetwork;
 
 import lombok.Getter;
+import pl.agh.logger.Logger;
 import pl.agh.p2pnetwork.model.Node;
 import pl.agh.p2pnetwork.model.dto.message.UpdateNetworkMessage;
 import pl.agh.p2pnetwork.model.dto.request.JoinToNetworkRequest;
@@ -12,6 +13,8 @@ public class NetworkManager {
     Node myself;
     @Getter
     Set<Node> nodes = new HashSet<>();
+    
+    Logger logger = Logger.getInstance();
 
     public NetworkManager(Node myself) {
         this.myself = myself;
@@ -19,7 +22,7 @@ public class NetworkManager {
             while (true) {
                 try {
                     Thread.sleep(1000);
-                    System.out.println("Nodes: " + nodes);
+                    logger.info("Nodes: " + nodes);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -29,21 +32,29 @@ public class NetworkManager {
     }
 
     public void connectMyselfToNetwork(String ip, Integer port) {
-        System.out.println("connect to Network invoked. ip: " + ip + ", port: " + port);
+        logger.info("connect to Network invoked. ip: " + ip + ", port: " + port);
         TCPSender.sendMessage(ip, port, new JoinToNetworkRequest(myself));
     }
 
     public void addNewNodeToNetwork(JoinToNetworkRequest joinToNetworkRequest) {
-        nodes.add(joinToNetworkRequest.getNewNode());
 
+        logger.info("New node joins the network, check current network status");
         Set<Node> tmp = new HashSet<>(nodes);
         tmp.add(myself);
+
         Set<Node> disconnectedNodes = TCPSender.sendMessage(nodes, UpdateNetworkMessage.builder()
                 .nodes(tmp)
                 .build());
 
-        System.out.println("disconnectedNodes: " + disconnectedNodes);
+        logger.info("Remove disconnected nodes: " + disconnectedNodes);
         nodes.removeAll(disconnectedNodes);
+
+        logger.info("Send actual network status to all nodes, including the new one");
+        nodes.add(joinToNetworkRequest.getNewNode());
+        tmp.removeAll(disconnectedNodes);
+        tmp.add(joinToNetworkRequest.getNewNode());
+        TCPSender.sendMessage(nodes, UpdateNetworkMessage.builder()
+                .nodes(tmp).build());
     }
 
     public void updateNetwork(UpdateNetworkMessage updateNetworkMessage) {

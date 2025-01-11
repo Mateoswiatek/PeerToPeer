@@ -2,6 +2,7 @@ package pl.agh.p2pnetwork;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import pl.agh.logger.Logger;
 import pl.agh.mapper.BatchMapper;
 import pl.agh.mapper.TaskMapper;
 import pl.agh.middleware.model.BatchUpdateMessage;
@@ -25,6 +26,7 @@ public class TCPListener {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private final NetworkManager networkManager;
     private final TaskControllerImpl taskController;
+    private final Logger logger = Logger.getInstance();
     private Node myself;
     private final int port;
     private boolean running;
@@ -44,22 +46,22 @@ public class TCPListener {
     private void start() {
         running = true;
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Serwer nasłuchuje na porcie: " + port);
+            logger.info("Serwer nasłuchuje na porcie: " + port);
 
             while (running) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Nowe połączenie: " + clientSocket.getInetAddress());
+                logger.info("Nowe połączenie: " + clientSocket.getInetAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
             }
         } catch (Exception e) {
-            System.err.println("Błąd serwera: " + e.getMessage());
+            logger.error("Błąd serwera: " + e.getMessage());
         }
     }
 
     // Metoda do zatrzymywania nasłuchiwania
     public void stop() {
         running = false;
-        System.out.println("Serwer został zatrzymany.");
+        logger.info("Serwer został zatrzymany.");
     }
 
     // Obsługa klienta
@@ -70,7 +72,7 @@ public class TCPListener {
         ) {
             String message;
             while ((message = in.readLine()) != null) {
-                System.out.println("Handle client, message: " + message);
+                logger.info("Handle client, message: " + message);
                 BaseMessage myMessage = MessageProcessor.parseMessage(message);
 
                 switch (myMessage) {
@@ -85,22 +87,23 @@ public class TCPListener {
                     }
                     case TaskFromNetworkMessage newTaskFromNetwork -> handleNewTaskFromNetwork(newTaskFromNetwork);
                     case BatchUpdateMessage newBatchUpdateMessage -> handleBatchUpdateMessage(newBatchUpdateMessage);
-                    default -> System.out.println("Nieobsługiwany typ wiadomości: " + myMessage.getClass().getSimpleName());
+                    default -> logger.info("Nieobsługiwany typ wiadomości: " + myMessage.getClass().getSimpleName());
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Błąd obsługi klienta: " + e.getMessage());
+            // TODO remove node, and inform network ?
+            logger.error("Błąd obsługi klienta: " + e.getMessage());
         } finally {
             try {
                 clientSocket.close();
             } catch (Exception e) {
-                System.err.println("Błąd podczas zamykania połączenia: " + e.getMessage());
+                logger.error("Błąd podczas zamykania połączenia: " + e.getMessage());
             }
         }
     }
 
     private String handleJoinToNetworkRequest(JoinToNetworkRequest joinRequest) {
+        logger.info("Handle join to network request - Send memory dump as response");
         networkManager.addNewNodeToNetwork(joinRequest);
         try{
             return objectMapper.writeValueAsString(taskController.getMemoryDump());
@@ -110,31 +113,35 @@ public class TCPListener {
     }
 
     private void handleUpdateNetworkMessage(UpdateNetworkMessage updateMessage) {
+        logger.info("Handle update network message - Add new nodes: " + updateMessage.getNodes());
         networkManager.updateNetwork(updateMessage);
     }
 
     private UUID handleNewTaskRequest(NewTaskRequest newTaskRequest) {
+        logger.info("Handle new task request");
         UUID taskId = taskController.createNewTask(TaskMapper.toDto(newTaskRequest));
-        System.out.println("New task id: " + taskId);
+        logger.info("New task id: " + taskId);
         taskController.startTask(taskId);
         return taskId;
     }
 
     private void handleNewTaskFromNetwork(TaskFromNetworkMessage newTaskRequestFromNetwork) {
         try {
+            logger.info("Handle new task from network ...");
             Task task = TaskMapper.toTask(newTaskRequestFromNetwork);
-
             taskController.createNewTaskFromNetwork(task);
 
-            // TODO start task???
+            logger.info("Start new task from network");
+            taskController.startTask(task.getTaskId());
 
-            System.out.println("Pomyślnie obsłużono nowe zadanie z sieci: " + task.getTaskId());
+            logger.info("Pomyślnie obsłużono nowe zadanie z sieci: " + task.getTaskId());
         } catch (Exception e) {
-            System.err.println("Błąd podczas obsługi nowego zadania z sieci: " + e.getMessage());
+            logger.error("Błąd podczas obsługi nowego zadania z sieci: " + e.getMessage());
         }
     }
 
     private void handleBatchUpdateMessage(BatchUpdateMessage newBatchUpdateMessage) {
+        logger.info("Handle batch update message");
         taskController.receiveBatchUpdateMessage(BatchMapper.messageToBatchUpdateDto(newBatchUpdateMessage));
     }
 

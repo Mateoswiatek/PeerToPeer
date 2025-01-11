@@ -2,6 +2,7 @@ package pl.agh;
 
 import pl.agh.p2pnetwork.TCPSender;
 import pl.agh.task.TaskControllerImpl;
+import pl.agh.task.factory.DefaultTaskFactory;
 import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
 import pl.agh.p2pnetwork.model.Node;
 import pl.agh.p2pnetwork.NetworkManager;
@@ -36,6 +37,7 @@ public class MainApp {
                 InMemoryTaskRepositoryAdapter.getInstance(),
                 TaskMessageSenderPortImpl.getInstance(),
                 networkManager,
+                new DefaultTaskFactory(),
                 new HashMap<>());
 
 

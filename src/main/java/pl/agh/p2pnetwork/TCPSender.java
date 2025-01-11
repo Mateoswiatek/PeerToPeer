@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import pl.agh.logger.Logger;
 import pl.agh.p2pnetwork.model.Node;
 
 import java.io.OutputStream;
@@ -15,6 +16,7 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TCPSender {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = Logger.getInstance();
 
     public static void sendMessage(String ip, int port, Object message) {
         try {
@@ -30,9 +32,10 @@ public class TCPSender {
             OutputStream outputStream = socket.getOutputStream();
             PrintWriter writer = new PrintWriter(outputStream, true);
             writer.println(jsonMessage);
-            System.out.println("Wysłano request do " + ip + ":" + port + "message: " + jsonMessage);
+            logger.info("Wysłano request do " + ip + ":" + port + " message: " + jsonMessage);
         } catch (Exception e) {
-            throw new RuntimeException("ip: " + ip + " port: " + port + " " + e.getMessage());
+            logger.error("ip: " + ip + " port: " + port + " " + e.getMessage());
+//            throw new RuntimeException("ip: " + ip + " port: " + port + " " + e.getMessage());
         }
     }
 
@@ -42,7 +45,7 @@ public class TCPSender {
         try {
             requestJson = objectMapper.writeValueAsString(message);
         } catch (JsonProcessingException e) {
-            System.err.println("Error during writeValueAsString: " + e.getMessage());
+            logger.error("Error during writeValueAsString: " + e.getMessage());
             return failedNodes;
         }
 
@@ -50,7 +53,7 @@ public class TCPSender {
             try {
                 sendMessage(node.getIp(), node.getPort(), requestJson);
             } catch (Exception e) {
-                System.err.println("Błąd podczas łączenia z nodem, dodajemy do nieudanych. " + e.getMessage());
+                logger.error("Błąd podczas łączenia z nodem, dodajemy do nieudanych. " + e.getMessage());
                 failedNodes.add(node);
             }
         });

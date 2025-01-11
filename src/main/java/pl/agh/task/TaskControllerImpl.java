@@ -1,6 +1,7 @@
 package pl.agh.task;
 
 import lombok.AllArgsConstructor;
+import pl.agh.logger.Logger;
 import pl.agh.mapper.BatchMapper;
 import pl.agh.mapper.TaskMapper;
 import pl.agh.middleware.model.MemoryDumpMessage;
@@ -33,6 +34,7 @@ public class TaskControllerImpl implements TaskController {
     private final TaskMessageSenderPort taskMessagePort;
     private final NetworkManager networkManager;
     private final TaskFactory taskFactory;
+    private final Logger logger = Logger.getInstance();
 
     private final Random random = new Random();
     private Map<UUID, TaskThread> taskThreads = new HashMap<>();
@@ -67,6 +69,7 @@ public class TaskControllerImpl implements TaskController {
      */
     public void receiveBatchUpdateMessage(BatchUpdateDto batchUpdateMessage) {
         // Zaktualizuj status batcha w repozytorium
+        logger.info("Receive batch update message");
         batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
 
         UUID taskId = batchUpdateMessage.getTaskId();
@@ -116,14 +119,18 @@ public class TaskControllerImpl implements TaskController {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy(); // Przypisanie strategii
 
         Task task = taskFactory.createTask(newTaskRequest, strategy);
-        taskRepositoryPort.save(task);
+        logger.info("Created task, id: " + task.getTaskId());
+
+        Task saved = taskRepositoryPort.save(task);
+
+        logger.info("Saved task: " + saved.getTaskId());
 
         TaskStatusLogger loggerObserver = new TaskStatusLogger();
         task.addObserver(loggerObserver);
 
-        CompletableFuture.runAsync(() -> taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), task));
+        CompletableFuture.runAsync(() -> taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), saved));
 
-        return this.createTask(task);
+        return this.initializeBatches(saved);
     }
 
 //    public void createNewTaskFromNetwork(Task task) {
@@ -137,10 +144,12 @@ public class TaskControllerImpl implements TaskController {
         TaskStatusLogger loggerObserver = new TaskStatusLogger();
         task.addObserver(loggerObserver);
 
-        CompletableFuture.runAsync(() -> this.createTask(task));
+        CompletableFuture.runAsync(() -> this.initializeBatches(task));
+//        this.initializeBatches(task);
     }
 
-    private UUID createTask(Task task) {
+    private UUID initializeBatches(Task task) {
+        logger.info("Initialize Batches for task: " + task.getTaskId());
         BigInteger totalPermutations = calculateTotalPermutations(task.getAlphabet().length(), task.getMaxLength());
 
         List<Batch> batches = new ArrayList<>();
@@ -168,10 +177,12 @@ public class TaskControllerImpl implements TaskController {
         }
 
         batchRepository.saveAll(batches);
+        logger.info("All batches initialized for task: " + task.getTaskId());
         return taskId;
     }
 
     public void startTask(UUID taskId) {
+        logger.info("Start new  task: " + taskId);
         taskThreads.computeIfAbsent(
                 taskId,
                 newThreadTaskId -> {
@@ -179,7 +190,7 @@ public class TaskControllerImpl implements TaskController {
                             this::getNextBatch,
                             this::callbackBatchUpdate,
                             id -> taskRepositoryPort.getById(id)
-                                    .orElseThrow(() -> new RuntimeException("Task not found")), // Funkcja dostarczająca Task
+                                    .orElseThrow(() -> new RuntimeException("Task not found: " + id)), // Funkcja dostarczająca Task
                             taskId // ID zadania
                     );
 
