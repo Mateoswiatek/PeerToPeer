@@ -26,6 +26,7 @@ public class TaskThread implements Runnable {
 
     @Override
     public void run() {
+        logger.info("Start task thread");
         Optional<Batch> optionalBatch;
 
         while ((optionalBatch = batchProvider.apply(taskId)).isPresent()) {

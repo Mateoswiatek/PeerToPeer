@@ -28,11 +28,11 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
     @Override
     public Task save(Task task) {
         logger.info("Save task to repository...");
-        if (task.getTaskId() != null && tasks.containsKey(task.getTaskId())) {
+        if (task.getTaskId() != null && !tasks.containsKey(task.getTaskId())) {
             logger.info("Task has ID, save it to MAP");
             tasks.put(task.getTaskId(), task);
             return task;
-        } else {
+        } else if (task.getTaskId() == null) {
             UUID taskId = UUID.randomUUID();
 
             Task newTask = Task.builder()
@@ -48,6 +48,10 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
             logger.info("Task has no ID, put task with random ID: " + taskId);
             tasks.put(taskId, task);
             return newTask;
+        }
+        else {
+            logger.error("Task sent with ID that is already present");
+            return null;
         }
     }
 

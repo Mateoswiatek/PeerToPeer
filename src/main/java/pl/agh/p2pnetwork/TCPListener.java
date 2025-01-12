@@ -58,6 +58,7 @@ public class TCPListener {
         }
     }
 
+
     // Metoda do zatrzymywania nasłuchiwania
     public void stop() {
         running = false;
@@ -95,6 +96,7 @@ public class TCPListener {
             logger.error("Błąd obsługi klienta: " + e.getMessage());
         } finally {
             try {
+                logger.info("Closing socket.");
                 clientSocket.close();
             } catch (Exception e) {
                 logger.error("Błąd podczas zamykania połączenia: " + e.getMessage());
@@ -128,13 +130,13 @@ public class TCPListener {
     private void handleNewTaskFromNetwork(TaskFromNetworkMessage newTaskRequestFromNetwork) {
         try {
             logger.info("Handle new task from network ...");
-            Task task = TaskMapper.toTask(newTaskRequestFromNetwork);
-            taskController.createNewTaskFromNetwork(task);
+//            Task task = TaskMapper.toTask(newTaskRequestFromNetwork);
+            UUID taskId = taskController.createNewTaskFromNetwork(newTaskRequestFromNetwork);
 
             logger.info("Start new task from network");
-            taskController.startTask(task.getTaskId());
+            taskController.startTask(taskId);
 
-            logger.info("Pomyślnie obsłużono nowe zadanie z sieci: " + task.getTaskId());
+            logger.info("Pomyślnie obsłużono nowe zadanie z sieci: " + taskId);
         } catch (Exception e) {
             logger.error("Błąd podczas obsługi nowego zadania z sieci: " + e.getMessage());
         }

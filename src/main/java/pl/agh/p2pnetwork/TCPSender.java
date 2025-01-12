@@ -21,13 +21,13 @@ public class TCPSender {
     public static void sendMessage(String ip, int port, Object message) {
         try {
             String requestJson = objectMapper.writeValueAsString(message);
-            sendMessage(ip, port, requestJson);
+            sendMessageRaw(ip, port, requestJson);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
     }
 
-    public static void sendMessage(String ip, int port, String jsonMessage) {
+    public static void sendMessageRaw(String ip, int port, String jsonMessage) {
         try (Socket socket = new Socket(ip, port)) {
             OutputStream outputStream = socket.getOutputStream();
             PrintWriter writer = new PrintWriter(outputStream, true);
@@ -39,7 +39,7 @@ public class TCPSender {
         }
     }
 
-    public static Set<Node> sendMessage(Set<Node> nodes, Object message) {
+    public static Set<Node> sendMessageToAllNodes(Set<Node> nodes, Object message) {
         Set<Node> failedNodes = new HashSet<>();
         String requestJson;
         try {
@@ -51,7 +51,7 @@ public class TCPSender {
 
         nodes.forEach(node -> {
             try {
-                sendMessage(node.getIp(), node.getPort(), requestJson);
+                sendMessageRaw(node.getIp(), node.getPort(), requestJson);
             } catch (Exception e) {
                 logger.error("Błąd podczas łączenia z nodem, dodajemy do nieudanych. " + e.getMessage());
                 failedNodes.add(node);

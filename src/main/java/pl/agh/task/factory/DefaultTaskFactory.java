@@ -1,6 +1,7 @@
 package pl.agh.task.factory;
 
 import pl.agh.logger.Logger;
+import pl.agh.middleware.model.TaskFromNetworkMessage;
 import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.dto.NewTaskDto;
@@ -24,6 +25,25 @@ public class DefaultTaskFactory implements TaskFactory {
                 .alphabet(newTaskRequest.getAlphabet())
                 .maxLength(newTaskRequest.getMaxLength())
                 .maxBatchSize(newTaskRequest.getMaxBatchSize())
+                .taskStatus(taskStatus)
+                .strategy(strategy)
+                .build();
+    }
+
+    @Override
+    public Task createTask(TaskFromNetworkMessage newTaskRequestFromNetwork, TaskExecutionStrategy strategy) {
+        logger.info("Task Factory - create task from network message");
+        // Pobierz status z NewTaskDto lub ustaw domyślny
+        TaskStatus taskStatus = newTaskRequestFromNetwork.getTaskStatus() != null
+                ? newTaskRequestFromNetwork.getTaskStatus()
+                : TaskStatus.CREATED;
+
+        return Task.builder()
+                .taskId(newTaskRequestFromNetwork.getTaskId())
+                .passwordHash(newTaskRequestFromNetwork.getPasswordHash())
+                .alphabet(newTaskRequestFromNetwork.getAlphabet())
+                .maxLength(newTaskRequestFromNetwork.getMaxLength())
+                .maxBatchSize(newTaskRequestFromNetwork.getMaxBatchSize())
                 .taskStatus(taskStatus)
                 .strategy(strategy)
                 .build();

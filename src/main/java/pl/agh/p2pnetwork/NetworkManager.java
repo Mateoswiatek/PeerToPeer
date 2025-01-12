@@ -42,7 +42,7 @@ public class NetworkManager {
         Set<Node> tmp = new HashSet<>(nodes);
         tmp.add(myself);
 
-        Set<Node> disconnectedNodes = TCPSender.sendMessage(nodes, UpdateNetworkMessage.builder()
+        Set<Node> disconnectedNodes = TCPSender.sendMessageToAllNodes(nodes, UpdateNetworkMessage.builder()
                 .nodes(tmp)
                 .build());
 
@@ -53,7 +53,7 @@ public class NetworkManager {
         nodes.add(joinToNetworkRequest.getNewNode());
         tmp.removeAll(disconnectedNodes);
         tmp.add(joinToNetworkRequest.getNewNode());
-        TCPSender.sendMessage(nodes, UpdateNetworkMessage.builder()
+        TCPSender.sendMessageToAllNodes(nodes, UpdateNetworkMessage.builder()
                 .nodes(tmp).build());
     }
 

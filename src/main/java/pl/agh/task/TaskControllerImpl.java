@@ -83,9 +83,6 @@ public class TaskControllerImpl implements TaskController {
                         taskRepositoryPort.save(task);
                     }
                 });
-
-                stopTask(taskThread);
-                startTask(taskId);
             }
             else if (batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
                 taskRepositoryPort.getById(taskId).ifPresent(task -> {
@@ -128,24 +125,25 @@ public class TaskControllerImpl implements TaskController {
         TaskStatusLogger loggerObserver = new TaskStatusLogger();
         task.addObserver(loggerObserver);
 
-        CompletableFuture.runAsync(() -> taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), saved));
-
+//        CompletableFuture.runAsync(() -> taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), saved));
+        taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), saved);
         return this.initializeBatches(saved);
     }
 
-//    public void createNewTaskFromNetwork(Task task) {
-//        taskRepositoryPort.save(task);
-//        this.createTask(task);
-//    }
+    public UUID createNewTaskFromNetwork(TaskFromNetworkMessage newTaskRequestFromNetwork) {
+        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
 
-    public void createNewTaskFromNetwork(Task task) {
-        taskRepositoryPort.save(task);
+        Task task = taskFactory.createTask(newTaskRequestFromNetwork, strategy);
+
+        task = taskRepositoryPort.save(task);
 
         TaskStatusLogger loggerObserver = new TaskStatusLogger();
         task.addObserver(loggerObserver);
 
-        CompletableFuture.runAsync(() -> this.initializeBatches(task));
-//        this.initializeBatches(task);
+//        CompletableFuture.runAsync(() -> this.initializeBatches(task));
+        this.initializeBatches(task);
+
+        return task.getTaskId();
     }
 
     private UUID initializeBatches(Task task) {
@@ -177,7 +175,7 @@ public class TaskControllerImpl implements TaskController {
         }
 
         batchRepository.saveAll(batches);
-        logger.info("All batches initialized for task: " + task.getTaskId());
+        logger.info("All batches initialized for task: " + task.getTaskId() + " total of: " + batches.size());
         return taskId;
     }
 
@@ -227,19 +225,23 @@ public class TaskControllerImpl implements TaskController {
     }
 
     private Optional<Batch> getNextBatch(UUID taskId) {
+        logger.info("Get next batch");
         List<Batch> batches = batchRepository.findAllByStatusAndTaskId(BatchStatus.NOT_DONE, taskId);
         if (batches.isEmpty()) {
+            logger.info("All batches BOOKED");
             batches = batchRepository.findAllByStatusAndTaskId(BatchStatus.BOOKED, taskId);
         }
 
         if (batches.isEmpty()) {
+            logger.info("All batches DONE");
             return Optional.empty();
         }
-
+        logger.info("Return random available batch");
         return Optional.of(batches.get(random.nextInt(batches.size())));
     }
 
     private void callbackBatchUpdate(BatchUpdateDto batchUpdateMessage) {
+        logger.info("Batch update");
         batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
         taskMessagePort.sendBatchUpdateMessage(networkManager.getNodes(), batchUpdateMessage);
         if(batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
