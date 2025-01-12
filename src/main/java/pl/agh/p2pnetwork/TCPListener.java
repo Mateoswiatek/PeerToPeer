@@ -6,6 +6,7 @@ import pl.agh.logger.Logger;
 import pl.agh.mapper.BatchMapper;
 import pl.agh.mapper.TaskMapper;
 import pl.agh.middleware.model.BatchUpdateMessage;
+import pl.agh.middleware.model.MemoryDumpMessage;
 import pl.agh.middleware.model.NewTaskRequest;
 import pl.agh.middleware.model.TaskFromNetworkMessage;
 import pl.agh.task.TaskControllerImpl;
@@ -21,6 +22,8 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.UUID;
+
+import static java.lang.Thread.sleep;
 
 public class TCPListener {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -50,6 +53,8 @@ public class TCPListener {
 
             while (running) {
                 Socket clientSocket = serverSocket.accept();
+//                clientSocket.setReuseAddress(true);
+//                clientSocket.setSoTimeout(500);
                 logger.info("Nowe połączenie: " + clientSocket.getInetAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
             }
@@ -73,13 +78,13 @@ public class TCPListener {
         ) {
             String message;
             while ((message = in.readLine()) != null) {
-                logger.info("Handle client, message: " + message);
                 BaseMessage myMessage = MessageProcessor.parseMessage(message);
 
                 switch (myMessage) {
                     case JoinToNetworkRequest joinRequest -> {
                         String response = handleJoinToNetworkRequest(joinRequest);
-                        out.println(response);
+                        TCPSender.sendMessageRaw(joinRequest.getNewNode().getIp(), joinRequest.getNewNode().getPort(), response);
+//                        out.println(response);
                     }
                     case UpdateNetworkMessage updateMessage -> handleUpdateNetworkMessage(updateMessage);
                     case NewTaskRequest newTaskRequest -> {
@@ -88,6 +93,7 @@ public class TCPListener {
                     }
                     case TaskFromNetworkMessage newTaskFromNetwork -> handleNewTaskFromNetwork(newTaskFromNetwork);
                     case BatchUpdateMessage newBatchUpdateMessage -> handleBatchUpdateMessage(newBatchUpdateMessage);
+                    case MemoryDumpMessage memoryDumpMessage -> handleMemoryDumpMessage(memoryDumpMessage);
                     default -> logger.info("Nieobsługiwany typ wiadomości: " + myMessage.getClass().getSimpleName());
                 }
             }
@@ -96,7 +102,6 @@ public class TCPListener {
             logger.error("Błąd obsługi klienta: " + e.getMessage());
         } finally {
             try {
-                logger.info("Closing socket.");
                 clientSocket.close();
             } catch (Exception e) {
                 logger.error("Błąd podczas zamykania połączenia: " + e.getMessage());
@@ -104,11 +109,23 @@ public class TCPListener {
         }
     }
 
+    private void handleMemoryDumpMessage(MemoryDumpMessage memoryDumpMessage) {
+        logger.info("Handle memory dump message");
+        logger.info("Received tasks: " + memoryDumpMessage.getTasksFromNetworkMessages().size());
+        logger.info("Received batches: " + memoryDumpMessage.getBatchUpdateDtoList().size());
+        memoryDumpMessage.getTasksFromNetworkMessages().forEach(task ->
+                handleNewTaskFromNetwork(task));
+        memoryDumpMessage.getBatchUpdateDtoList().forEach(batch ->
+                handleBatchUpdateMessage(new BatchUpdateMessage(batch)));
+    }
+
     private String handleJoinToNetworkRequest(JoinToNetworkRequest joinRequest) {
         logger.info("Handle join to network request - Send memory dump as response");
         networkManager.addNewNodeToNetwork(joinRequest);
         try{
-            return objectMapper.writeValueAsString(taskController.getMemoryDump());
+            String response = objectMapper.writeValueAsString(taskController.getMemoryDump());
+            logger.info("Memory dump to be sent");
+            return response;
         } catch (JsonProcessingException e) {
             return "";
         }
@@ -129,7 +146,7 @@ public class TCPListener {
 
     private void handleNewTaskFromNetwork(TaskFromNetworkMessage newTaskRequestFromNetwork) {
         try {
-            logger.info("Handle new task from network ...");
+            logger.info("Handle new task from network " + newTaskRequestFromNetwork.getTaskId());
 //            Task task = TaskMapper.toTask(newTaskRequestFromNetwork);
             UUID taskId = taskController.createNewTaskFromNetwork(newTaskRequestFromNetwork);
 

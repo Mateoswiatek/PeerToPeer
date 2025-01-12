@@ -7,7 +7,9 @@ import pl.agh.p2pnetwork.model.dto.message.UpdateNetworkMessage;
 import pl.agh.p2pnetwork.model.dto.request.JoinToNetworkRequest;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class NetworkManager {
     Node myself;
@@ -38,23 +40,26 @@ public class NetworkManager {
 
     public void addNewNodeToNetwork(JoinToNetworkRequest joinToNetworkRequest) {
 
+        String newNodeIp = joinToNetworkRequest.getNewNode().getIp();
+        int newNodePort = joinToNetworkRequest.getNewNode().getPort();
+
         logger.info("New node joins the network, check current network status");
+
+        Set<Node> duplicates = nodes.stream().filter(node ->
+                (node.getPort() == newNodePort && Objects.equals(node.getIp(), newNodeIp))).collect(Collectors.toSet());
+
+        nodes.removeAll(duplicates);
+
+        nodes.add(joinToNetworkRequest.getNewNode());
+
         Set<Node> tmp = new HashSet<>(nodes);
         tmp.add(myself);
-
         Set<Node> disconnectedNodes = TCPSender.sendMessageToAllNodes(nodes, UpdateNetworkMessage.builder()
                 .nodes(tmp)
                 .build());
 
-        logger.info("Remove disconnected nodes: " + disconnectedNodes);
+        logger.info("disconnectedNodes: " + disconnectedNodes + " duplicates: " + duplicates);
         nodes.removeAll(disconnectedNodes);
-
-        logger.info("Send actual network status to all nodes, including the new one");
-        nodes.add(joinToNetworkRequest.getNewNode());
-        tmp.removeAll(disconnectedNodes);
-        tmp.add(joinToNetworkRequest.getNewNode());
-        TCPSender.sendMessageToAllNodes(nodes, UpdateNetworkMessage.builder()
-                .nodes(tmp).build());
     }
 
     public void updateNetwork(UpdateNetworkMessage updateNetworkMessage) {
