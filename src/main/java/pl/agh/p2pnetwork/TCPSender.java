@@ -12,7 +12,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
-
+@Deprecated
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TCPSender {
     private static final ObjectMapper objectMapper = new ObjectMapper();

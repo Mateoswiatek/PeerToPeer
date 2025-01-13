@@ -40,11 +40,11 @@ public class MainApp {
         Node myself = new Node(UUID.randomUUID(), "localhost", Integer.parseInt(args[0]));
 
         NetworkManager networkManager = new NetworkManager(myself);
-
+        TaskMessageSenderPortImpl taskMessageSenderPort = new TaskMessageSenderPortImpl(networkManager);
         TaskControllerImpl taskController = new TaskControllerImpl(
                 InMemoryBatchRepositoryAdapter.getInstance(),
                 InMemoryTaskRepositoryAdapter.getInstance(),
-                TaskMessageSenderPortImpl.getInstance(),
+                taskMessageSenderPort,
                 networkManager,
                 new DefaultTaskFactory(),
                 new HashMap<>());

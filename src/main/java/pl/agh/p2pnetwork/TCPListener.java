@@ -83,7 +83,7 @@ public class TCPListener {
                 switch (myMessage) {
                     case JoinToNetworkRequest joinRequest -> {
                         String response = handleJoinToNetworkRequest(joinRequest);
-                        TCPSender.sendMessageRaw(joinRequest.getNewNode().getIp(), joinRequest.getNewNode().getPort(), response);
+                        networkManager.sendMessageRaw(joinRequest.getNewNode().getIp(), joinRequest.getNewNode().getPort(), response);
 //                        out.println(response);
                     }
                     case UpdateNetworkMessage updateMessage -> handleUpdateNetworkMessage(updateMessage);
