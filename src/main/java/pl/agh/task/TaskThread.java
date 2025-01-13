@@ -55,7 +55,7 @@ public class TaskThread implements Runnable {
             logger.info("Batch finished, inform other network members. Task: " + currentBatch.getTaskId() + " Batch: " + currentBatch.getBatchId());
             batchUpdateMessageCallback.accept(BatchUpdateDto.getFromBatchWithStatus(currentBatch, BatchStatus.DONE));
         }
-        logger.info("Task finished, result");
+        logger.info("Task Thread finished");
     }
 
     public void stopTask() {

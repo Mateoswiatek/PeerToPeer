@@ -4,8 +4,8 @@ import java.math.BigInteger;
 
 public class PermutationIteratorExample {
 
-    private static char[] alphabet = "ac".toCharArray(); // Alfabet // defghijklmnopqrstuvwxyz
-    private static int maxLength = 3; // Maksymalna długość hasła
+    private static char[] alphabet = "abc".toCharArray(); // Alfabet // defghijklmnopqrstuvwxyz
+    private static int maxLength = 10; // Maksymalna długość hasła
 
     public static BigInteger calculateTotalPermutations() {
         BigInteger total = BigInteger.ZERO;
@@ -22,8 +22,8 @@ public class PermutationIteratorExample {
 
     public static void main(String[] args) {
         // Używamy BigInteger do reprezentowania indeksów
-        BigInteger startIndex = new BigInteger("400");
-        BigInteger endIndex = new BigInteger("500");
+        BigInteger startIndex = new BigInteger("0");
+        BigInteger endIndex = new BigInteger("30");
 
         // Tworzymy iterator na podstawie zakresu
         PermutationIterator iterator = new PermutationIterator(startIndex, endIndex, maxLength, alphabet);
