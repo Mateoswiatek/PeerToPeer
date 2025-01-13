@@ -16,26 +16,26 @@ public class TaskMapper {
                 .build();
     }
 
-    public static NewTaskRequest toRequest(NewTaskDto dto) {
-        return new NewTaskRequest(
-                dto.getPasswordHash(),
-                dto.getAlphabet(),
-                dto.getMaxLength(),
-                dto.getMaxBatchSize()
-        );
-    }
-
-    public static Task toTask(TaskFromNetworkMessage message) {
-        return Task.builder()
-                .taskId(message.getTaskId())
-                .passwordHash(message.getPasswordHash())
-                .alphabet(message.getAlphabet())
-                .maxLength(message.getMaxLength())
-                .maxBatchSize(message.getMaxBatchSize())
-                .taskStatus(message.getTaskStatus())
-                .result(message.getResult())
-                .build();
-    }
+//    public static NewTaskRequest toRequest(NewTaskDto dto) {
+//        return new NewTaskRequest(
+//                dto.getPasswordHash(),
+//                dto.getAlphabet(),
+//                dto.getMaxLength(),
+//                dto.getMaxBatchSize()
+//        );
+//    }
+//
+//    public static Task toTask(TaskFromNetworkMessage message) {
+//        return Task.builder()
+//                .taskId(message.getTaskId())
+//                .passwordHash(message.getPasswordHash())
+//                .alphabet(message.getAlphabet())
+//                .maxLength(message.getMaxLength())
+//                .maxBatchSize(message.getMaxBatchSize())
+//                .taskStatus(message.getTaskStatus())
+//                .result(message.getResult())
+//                .build();
+//    }
 
     public static TaskFromNetworkMessage toTaskFromNetworkMessage(Task task) {
         return new TaskFromNetworkMessage(

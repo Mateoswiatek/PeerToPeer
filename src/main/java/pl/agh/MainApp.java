@@ -1,6 +1,5 @@
 package pl.agh;
 
-import pl.agh.p2pnetwork.TCPSender;
 import pl.agh.task.TaskControllerImpl;
 import pl.agh.task.factory.DefaultTaskFactory;
 import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
@@ -10,6 +9,8 @@ import pl.agh.p2pnetwork.TCPListener;
 import pl.agh.task.impl.InMemoryTaskRepositoryAdapter;
 import pl.agh.task.impl.TaskMessageSenderPortImpl;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -27,6 +28,14 @@ public class MainApp {
         if (args.length < 1) {
             throw new RuntimeException("Użycie: java pl.agh.MainApp <port> [nodeIpFromNetwork nodePortFromNetwork]");
         }
+
+        String ipAddress;
+        try {
+            ipAddress = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("Nie można pobrać adresu IP hosta", e);
+        }
+        System.out.println("ipAddress: " + ipAddress);
 
         Node myself = new Node(UUID.randomUUID(), "localhost", Integer.parseInt(args[0]));
 
