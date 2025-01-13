@@ -19,15 +19,16 @@ public class DefaultTaskFactory implements TaskFactory {
                 ? newTaskRequest.getTaskStatus()
                 : TaskStatus.CREATED;
 
-        return Task.builder()
-//                .taskId(UUID.randomUUID()) // Generowanie unikalnego ID dla nowego taska
-                .passwordHash(newTaskRequest.getPasswordHash())
-                .alphabet(newTaskRequest.getAlphabet())
-                .maxLength(newTaskRequest.getMaxLength())
-                .maxBatchSize(newTaskRequest.getMaxBatchSize())
-                .taskStatus(taskStatus)
-                .strategy(strategy)
-                .build();
+        return new Task(
+                null,
+                newTaskRequest.getPasswordHash(),
+                newTaskRequest.getAlphabet(),
+                newTaskRequest.getMaxLength(),
+                newTaskRequest.getMaxBatchSize(),
+                taskStatus,
+                null,
+                strategy
+        );
     }
 
     @Override
@@ -38,14 +39,15 @@ public class DefaultTaskFactory implements TaskFactory {
                 ? newTaskRequestFromNetwork.getTaskStatus()
                 : TaskStatus.CREATED;
 
-        return Task.builder()
-                .taskId(newTaskRequestFromNetwork.getTaskId())
-                .passwordHash(newTaskRequestFromNetwork.getPasswordHash())
-                .alphabet(newTaskRequestFromNetwork.getAlphabet())
-                .maxLength(newTaskRequestFromNetwork.getMaxLength())
-                .maxBatchSize(newTaskRequestFromNetwork.getMaxBatchSize())
-                .taskStatus(taskStatus)
-                .strategy(strategy)
-                .build();
+        return new Task(
+                newTaskRequestFromNetwork.getTaskId(),
+                newTaskRequestFromNetwork.getPasswordHash(),
+                newTaskRequestFromNetwork.getAlphabet(),
+                newTaskRequestFromNetwork.getMaxLength(),
+                newTaskRequestFromNetwork.getMaxBatchSize(),
+                taskStatus,
+                null,
+                strategy
+        );
     }
 }

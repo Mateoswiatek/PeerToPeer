@@ -35,15 +35,16 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
         } else if (task.getTaskId() == null) {
             UUID taskId = UUID.randomUUID();
 
-            Task newTask = Task.builder()
-                    .taskId(taskId)
-                    .passwordHash(task.getPasswordHash())
-                    .alphabet(task.getAlphabet())
-                    .maxLength(task.getMaxLength())
-                    .maxBatchSize(task.getMaxBatchSize())
-                    .taskStatus(task.getTaskStatus())
-                    .result(task.getResult())
-                    .build();
+            Task newTask = new Task(
+                    taskId,
+                    task.getPasswordHash(),
+                    task.getAlphabet(),
+                    task.getMaxLength(),
+                    task.getMaxBatchSize(),
+                    task.getTaskStatus(),
+                    task.getResult(),
+                    task.getStrategy()
+            );
 
             logger.info("Task has no ID, put task with random ID: " + taskId);
             tasks.put(taskId, newTask);

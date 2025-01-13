@@ -1,9 +1,8 @@
 package pl.agh.task.model;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pl.agh.task.impl.TaskExecutionStrategy;
-import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.enumerated.TaskStatus;
 
 import java.util.ArrayList;
@@ -11,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-@Builder
+@AllArgsConstructor
 public class Task {
     private UUID taskId;
     private String passwordHash;
@@ -23,17 +22,6 @@ public class Task {
     private TaskExecutionStrategy strategy;
 
     private final List<TaskObserver> observers = new ArrayList<>(); // Lista obserwatorów
-
-    public static Task fromNewTaskRequest(NewTaskDto newTaskRequest, TaskStatus taskStatus, TaskExecutionStrategy strategy) {
-        return Task.builder()
-                .passwordHash(newTaskRequest.getPasswordHash())
-                .alphabet(newTaskRequest.getAlphabet())
-                .maxLength(newTaskRequest.getMaxLength())
-                .maxBatchSize(newTaskRequest.getMaxBatchSize())
-                .taskStatus(taskStatus)
-                .strategy(strategy)
-                .build();
-    }
 
     public void complete(String result) {
         this.result = result;

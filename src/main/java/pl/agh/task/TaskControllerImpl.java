@@ -109,14 +109,6 @@ public class TaskControllerImpl implements TaskController {
      * @param newTaskRequest
      * @return
      */
-//    public UUID createNewTask(NewTaskDto newTaskRequest) {
-//        Task task = taskRepositoryPort.save(Task.fromNewTaskRequest(newTaskRequest, TaskStatus.CREATED));
-//
-//        taskMessagePort.sendTaskUpdateMessage(task);
-//        // Service
-//        return this.createTask(task);
-//    }
-
     public UUID createNewTask(NewTaskDto newTaskRequest) {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy(); // Przypisanie strategii
 
@@ -147,9 +139,7 @@ public class TaskControllerImpl implements TaskController {
 
 //        Task finalTask = task;
 //        CompletableFuture.runAsync(() -> this.initializeBatches(finalTask));
-        this.initializeBatches(task);
-
-        return task.getTaskId();
+        return this.initializeBatches(task);
     }
 
     private UUID initializeBatches(Task task) {
