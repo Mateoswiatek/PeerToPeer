@@ -25,8 +25,12 @@ public class PermutationIterator implements Iterator<String> {
             throw new NoSuchElementException("Brak więcej permutacji w zakresie");
         }
 
-        String password = getPermutationAtIndex(currentIndex, maxLength, alphabet);
-        currentIndex = currentIndex.add(BigInteger.ONE); // Przechodzimy do następnego indeksu
+        // Obliczamy aktualną długość permutacji na podstawie indeksu
+        int currentLength = calculateCurrentLength(currentIndex, alphabet.length, maxLength);
+        String password = getPermutationAtIndex(currentIndex, currentLength, alphabet);
+
+        // Przechodzimy do następnego indeksu
+        currentIndex = currentIndex.add(BigInteger.ONE);
         return password;
     }
 
@@ -43,5 +47,21 @@ public class PermutationIterator implements Iterator<String> {
         }
 
         return new String(result);
+    }
+
+    private int calculateCurrentLength(BigInteger index, int alphabetSize, int maxLength) {
+        BigInteger currentPower = BigInteger.ONE;
+        BigInteger totalPermutations = BigInteger.ZERO;
+
+        for (int length = 1; length <= maxLength; length++) {
+            currentPower = currentPower.multiply(BigInteger.valueOf(alphabetSize));
+            totalPermutations = totalPermutations.add(currentPower);
+
+            if (index.compareTo(totalPermutations) < 0) {
+                return length;
+            }
+        }
+
+        throw new IllegalStateException("Index exceeds the total number of permutations");
     }
 }
