@@ -1,5 +1,6 @@
 package pl.agh;
 
+import pl.agh.middleware.DoneTaskProcessorToFileImpl;
 import pl.agh.task.TaskControllerImpl;
 import pl.agh.task.factory.DefaultTaskFactory;
 import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
@@ -20,7 +21,6 @@ public class MainApp {
 //    5001 192.168.0.110 5000
 //    5001 localhost 5000
     public static void main(String[] args) {
-        //TODO (09.01.2025): Debugging
         for (String arg : args) {
             System.out.println(arg);
         }
@@ -39,6 +39,8 @@ public class MainApp {
 
         Node myself = new Node(UUID.randomUUID(), "localhost", Integer.parseInt(args[0]));
 
+        DoneTaskProcessorToFileImpl doneTaskProcessorToFile = DoneTaskProcessorToFileImpl.getInstance(args[0] + ".json");
+
         NetworkManager networkManager = new NetworkManager(myself);
         TaskMessageSenderPortImpl taskMessageSenderPort = new TaskMessageSenderPortImpl(networkManager);
         TaskControllerImpl taskController = new TaskControllerImpl(
@@ -47,11 +49,9 @@ public class MainApp {
                 taskMessageSenderPort,
                 networkManager,
                 new DefaultTaskFactory(),
-                new HashMap<>());
+                doneTaskProcessorToFile);
 
-
-        new TCPListener(networkManager, taskController, myself).startAsync();
-
+        new TCPListener(networkManager, taskController, doneTaskProcessorToFile, myself).startAsync();
         if (args.length == 3) { // Czy podłączamy się do sieci, czy jest to pierwszy node
             networkManager.connectMyselfToNetwork(args[1], Integer.parseInt(args[2]));
         } else {

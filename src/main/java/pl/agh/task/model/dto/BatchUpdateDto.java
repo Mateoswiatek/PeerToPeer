@@ -4,11 +4,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
-import pl.agh.middleware.model.TaskFromNetworkMessage;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.enumerated.BatchStatus;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data

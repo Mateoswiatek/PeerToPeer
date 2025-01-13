@@ -50,4 +50,16 @@ public class TaskFromNetworkMessage extends BaseMessage {
         this.taskStatus = task.getTaskStatus();
         this.result = task.getResult();
     }
+
+    public Task getTask() {
+        return new Task(
+                taskId,
+                passwordHash,
+                alphabet,
+                maxLength,
+                maxBatchSize,
+                taskStatus,
+                result,
+                null);
+    }
 }

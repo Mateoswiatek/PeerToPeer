@@ -4,7 +4,7 @@ import java.math.BigInteger;
 
 public class PermutationIteratorExample {
 
-    private static char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray(); // Alfabet
+    private static char[] alphabet = "ac".toCharArray(); // Alfabet // defghijklmnopqrstuvwxyz
     private static int maxLength = 3; // Maksymalna długość hasła
 
     public static BigInteger calculateTotalPermutations() {
