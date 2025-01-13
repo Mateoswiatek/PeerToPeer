@@ -199,12 +199,12 @@ public class TaskControllerImpl implements TaskController {
 
     public void stopTask(UUID taskId) {
         taskThreads.get(taskId).stopTask();
-        taskThreads.remove(taskId);
+//        taskThreads.remove(taskId);
     }
 
     public void stopTask(TaskThread taskThread) {
         taskThread.stopTask();
-        taskThreads.remove(taskThread.getTaskId());
+//        taskThreads.remove(taskThread.getTaskId());
     }
 
     private BigInteger calculateTotalPermutations(int alphabetLength, Long maxLength) {
