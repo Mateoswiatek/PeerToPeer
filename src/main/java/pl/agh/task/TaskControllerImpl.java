@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import pl.agh.logger.Logger;
 import pl.agh.mapper.BatchMapper;
 import pl.agh.mapper.TaskMapper;
+import pl.agh.middleware.DoneTaskProcessor;
 import pl.agh.middleware.model.MemoryDumpMessage;
 import pl.agh.middleware.model.TaskFromNetworkMessage;
 import pl.agh.p2pnetwork.NetworkManager;
@@ -24,8 +25,6 @@ import pl.agh.task.ports.outbound.TaskRepositoryPort;
 
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -36,11 +35,11 @@ public class TaskControllerImpl implements TaskController {
     private final TaskMessageSenderPort taskMessagePort;
     private final NetworkManager networkManager;
     private final TaskFactory taskFactory;
+    private final DoneTaskProcessor doneTaskProcessor;
     private final Logger logger = Logger.getInstance();
 
     private final Random random = new Random();
-    private Map<UUID, TaskThread> taskThreads = new HashMap<>();
-
+    private final Map<UUID, TaskThread> taskThreads = new HashMap<>();
 
 //    To ma być na zwrotce do noda ktory się podłączył.
     public MemoryDumpMessage getMemoryDump() {
@@ -131,7 +130,6 @@ public class TaskControllerImpl implements TaskController {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
 
         Task task = taskFactory.createTask(newTaskRequestFromNetwork, strategy);
-
         task = taskRepositoryPort.save(task);
 
         TaskStatusLogger loggerObserver = new TaskStatusLogger();
@@ -246,6 +244,7 @@ public class TaskControllerImpl implements TaskController {
             task.complete(batchUpdateMessage.getResult());
 
             taskRepositoryPort.save(task);
+            doneTaskProcessor.processDoneTask(task);
 
             taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), task);
             logger.info("Stop task: " + batchUpdateMessage.getTaskId());

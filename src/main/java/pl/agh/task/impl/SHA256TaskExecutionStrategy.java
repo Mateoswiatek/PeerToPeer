@@ -46,4 +46,9 @@ public class SHA256TaskExecutionStrategy implements TaskExecutionStrategy {
 
         return hexString.toString();
     }
+
+    @Override
+    public String getName() {
+        return "SHA256";
+    }
 }

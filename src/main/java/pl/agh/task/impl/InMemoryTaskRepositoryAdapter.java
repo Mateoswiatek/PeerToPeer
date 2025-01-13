@@ -28,13 +28,17 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
     @Override
     public Task save(Task task) {
         logger.info("Save task to repository...");
-        if (task.getTaskId() != null && !tasks.containsKey(task.getTaskId())) {
-            logger.info("Task has ID, save it to MAP" + task.getTaskId());
+
+//      Jeśli nie ma taskId - nowy zapis, jeśli ma taskId - encja została utworzona gdzies indziej, zapisujemy
+//      Z przekazanym id
+        UUID taskId = task.getTaskId() == null ? UUID.randomUUID() : task.getTaskId();
+
+        // Jeśli jest zapisany - updatujemy
+        if(tasks.containsKey(taskId)) {
+            logger.info("Task has ID, save it to MAP, taskId: " + task.getTaskId());
             tasks.put(task.getTaskId(), task);
             return task;
         } else {
-            UUID taskId = UUID.randomUUID();
-
             Task newTask = new Task(
                     taskId,
                     task.getPasswordHash(),

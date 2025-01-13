@@ -1,5 +1,6 @@
 package pl.agh.task.model;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pl.agh.task.impl.TaskExecutionStrategy;
@@ -49,5 +50,10 @@ public class Task {
         for (TaskObserver observer : observers) {
             observer.onTaskStatusChanged(this);
         }
+    }
+
+    @JsonGetter("strategy")
+    public String getStrategyName() {
+        return strategy != null ? strategy.getName() : "Unknown";
     }
 }
