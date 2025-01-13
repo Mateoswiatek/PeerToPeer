@@ -7,7 +7,10 @@ import pl.agh.logger.Logger;
 import pl.agh.p2pnetwork.model.Node;
 import pl.agh.p2pnetwork.model.dto.message.UpdateNetworkMessage;
 import pl.agh.p2pnetwork.model.dto.request.JoinToNetworkRequest;
+import pl.agh.task.model.Task;
+import pl.agh.task.model.dto.BatchUpdateDto;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -20,12 +23,17 @@ public class NetworkManager {
     Node myself;
     @Getter
     Set<Node> nodes = new HashSet<>();
+    private final P2PTCPListener p2pTCPListener;
+    private final P2PTCPSender p2pTCPSender;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Logger logger = Logger.getInstance();
 
-    public NetworkManager(Node myself) {
+    public NetworkManager(Node myself, P2PTCPListener p2pTCPListener, P2PTCPSender p2pTCPSender) {
         this.myself = myself;
+        this.p2pTCPListener = p2pTCPListener;
+        this.p2pTCPSender = p2pTCPSender;
+
         Thread listenerThread = new Thread(() -> {
             while (true) {
                 try {
@@ -39,12 +47,30 @@ public class NetworkManager {
         listenerThread.start();
     }
 
-    public void connectMyselfToNetwork(String ip, Integer port) {
+    public void connectMyselfToNetwork(String ip, int port) throws IOException {
         logger.info("connect to Network invoked. ip: " + ip + ", port: " + port);
-        sendMessage(ip, port, new JoinToNetworkRequest(myself));
+        p2pTCPSender.sendJoinToNetworkRequest(ip, port, new JoinToNetworkRequest(myself));
     }
 
+
+//
+//    public void connectMyselfToNetwork(String ip, Integer port) {
+//        sendMessage(ip, port, new JoinToNetworkRequest(myself));
+//    }
+
     public void addNewNodeToNetwork(JoinToNetworkRequest joinToNetworkRequest) {
+
+
+
+
+
+
+
+
+
+
+
+
 
         String newNodeIp = joinToNetworkRequest.getNewNode().getIp();
         int newNodePort = joinToNetworkRequest.getNewNode().getPort();
@@ -132,5 +158,16 @@ public class NetworkManager {
             }
         });
         return failedNodes;
+    }
+
+    @Override
+    public void sendBatchUpdateMessage(BatchUpdateDto message) {
+
+    }
+
+    @Override
+    public void sendTaskUpdateMessage(Task newTask) {
+
+
     }
 }

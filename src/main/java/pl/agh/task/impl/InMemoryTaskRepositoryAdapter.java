@@ -29,31 +29,33 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
     public Task save(Task task) {
         logger.info("Save task to repository...");
 
-//      Jeśli nie ma taskId - nowy zapis, jeśli ma taskId - encja została utworzona gdzies indziej, zapisujemy
-//      Z przekazanym id
-        UUID taskId = task.getTaskId() == null ? UUID.randomUUID() : task.getTaskId();
-
-        // Jeśli jest zapisany - updatujemy
-        if(tasks.containsKey(taskId)) {
-            logger.info("Task has ID, save it to MAP, taskId: " + task.getTaskId());
-            tasks.put(task.getTaskId(), task);
-            return task;
-        } else {
-            Task newTask = new Task(
-                    taskId,
-                    task.getPasswordHash(),
-                    task.getAlphabet(),
-                    task.getMaxLength(),
-                    task.getMaxBatchSize(),
-                    task.getTaskStatus(),
-                    task.getResult(),
-                    task.getStrategy()
-            );
-
-            logger.info("Task has no ID, put task with random ID: " + taskId);
-            tasks.put(taskId, newTask);
-            return newTask;
+        if(task.getTaskId() == null) {
+            task.setTaskId(UUID.randomUUID());
+            logger.info("Task has no id, new randomUUID: " + task.getTaskId());
         }
+
+        // Nie ważne, czy został stworzony u nas, czy w innym node, zapisujemy.
+        tasks.put(task.getTaskId(), task);
+        return task;
+
+//        if(tasks.containsKey(task.getTaskId())) {
+//
+//        } else {
+//            Task newTask = new Task(
+//                    taskId,
+//                    task.getPasswordHash(),
+//                    task.getAlphabet(),
+//                    task.getMaxLength(),
+//                    task.getMaxBatchSize(),
+//                    task.getTaskStatus(),
+//                    task.getResult(),
+//                    task.getStrategy()
+//            );
+//
+//            logger.info("Task has no ID, put task with random ID: " + taskId);
+//            tasks.put(taskId, newTask);
+//            return newTask;
+//        }
     }
 
     @Override

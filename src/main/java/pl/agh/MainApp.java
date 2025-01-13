@@ -8,11 +8,9 @@ import pl.agh.p2pnetwork.model.Node;
 import pl.agh.p2pnetwork.NetworkManager;
 import pl.agh.p2pnetwork.TCPListener;
 import pl.agh.task.impl.InMemoryTaskRepositoryAdapter;
-import pl.agh.task.impl.TaskMessageSenderPortImpl;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.UUID;
 
 public class MainApp {
@@ -42,11 +40,10 @@ public class MainApp {
         DoneTaskProcessorToFileImpl doneTaskProcessorToFile = DoneTaskProcessorToFileImpl.getInstance(args[0] + ".json");
 
         NetworkManager networkManager = new NetworkManager(myself);
-        TaskMessageSenderPortImpl taskMessageSenderPort = new TaskMessageSenderPortImpl(networkManager);
+
         TaskControllerImpl taskController = new TaskControllerImpl(
                 InMemoryBatchRepositoryAdapter.getInstance(),
                 InMemoryTaskRepositoryAdapter.getInstance(),
-                taskMessageSenderPort,
                 networkManager,
                 new DefaultTaskFactory(),
                 doneTaskProcessorToFile);

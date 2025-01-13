@@ -6,8 +6,7 @@ import pl.agh.mapper.BatchMapper;
 import pl.agh.mapper.TaskMapper;
 import pl.agh.middleware.DoneTaskProcessor;
 import pl.agh.middleware.model.MemoryDumpMessage;
-import pl.agh.middleware.model.TaskFromNetworkMessage;
-import pl.agh.p2pnetwork.NetworkManager;
+import pl.agh.middleware.model.TaskUpdateMessage;
 import pl.agh.task.factory.TaskFactory;
 import pl.agh.task.impl.SHA256TaskExecutionStrategy;
 import pl.agh.task.impl.TaskExecutionStrategy;
@@ -33,7 +32,6 @@ public class TaskControllerImpl implements TaskController {
     private final BatchRepositoryPort batchRepository;
     private final TaskRepositoryPort taskRepositoryPort;
     private final TaskMessageSenderPort taskMessagePort;
-    private final NetworkManager networkManager;
     private final TaskFactory taskFactory;
     private final DoneTaskProcessor doneTaskProcessor;
     private final Logger logger = Logger.getInstance();
@@ -43,20 +41,20 @@ public class TaskControllerImpl implements TaskController {
 
 //    To ma być na zwrotce do noda ktory się podłączył.
     public MemoryDumpMessage getMemoryDump() {
-        List<TaskFromNetworkMessage> tasks = taskRepositoryPort.findAll().stream().map(task -> {
+        List<TaskUpdateMessage> tasks = taskRepositoryPort.findAll().stream().map(task -> {
             logger.info("Task ID: " + task.getTaskId());
             return TaskMapper.toTaskFromNetworkMessage(task);
         }).toList();
         List<Batch> batches = batchRepository.findAll();
 
-        List<TaskFromNetworkMessage> doneTasks = tasks.stream().filter(t -> t.getTaskStatus().equals(TaskStatus.DONE)).toList();
+        List<TaskUpdateMessage> doneTasks = tasks.stream().filter(t -> t.getTaskStatus().equals(TaskStatus.DONE)).toList();
 
         List<BatchUpdateDto> batchesUpdateDtoList = batchRepository.findAll().stream()
                 .filter(b -> !b.getStatus().equals(BatchStatus.FOUND))
                 .map(b -> BatchMapper.toBatchUpdateDto(b, null)).collect(toList());
 
         List<BatchUpdateDto> doneBatches = batches.stream().filter(b -> b.getStatus().equals(BatchStatus.FOUND)).map(b -> {
-                TaskFromNetworkMessage thisTask = doneTasks.stream().filter(dt -> dt.getTaskId().equals(b.getTaskId())).findFirst().orElseThrow();
+                TaskUpdateMessage thisTask = doneTasks.stream().filter(dt -> dt.getTaskId().equals(b.getTaskId())).findFirst().orElseThrow();
                 return BatchMapper.toBatchUpdateDto(b, thisTask.getResult());
             }).toList();
 
@@ -72,7 +70,6 @@ public class TaskControllerImpl implements TaskController {
      * @param batchUpdateMessage
      */
     public void receiveBatchUpdateMessage(BatchUpdateDto batchUpdateMessage) {
-        // Zaktualizuj status batcha w repozytorium
         logger.info("Receive batch update message");
         batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
 
@@ -98,35 +95,27 @@ public class TaskControllerImpl implements TaskController {
         }
     }
 
-
-
-//     * Jeśli taskId jest nullem, to zakładamy, że jest to nowe zadanie i należy je rozesłać, jeśli ma uuid, to oznacza,
-//     * że pochodzi z sieci i nie musimy tego rozsyłać dalej (nie ma pętli)
-    //TODO (10.01.2025): Zrobić, aby to było asynchronicznie wołane ???
     /**
-     * Zawsze przychodzi nowy task
-     * @param newTaskRequest
-     * @return
+     * Zawsze przychodzi nowy task od Klienta.
+     * @param newTaskRequest request from Client / external system
+     * @return taskId
      */
     public UUID createNewTask(NewTaskDto newTaskRequest) {
-        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy(); // Przypisanie strategii
+        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
 
         Task task = taskFactory.createTask(newTaskRequest, strategy);
-        logger.info("Created task, id: " + task.getTaskId());
+        task.addObserver(new TaskStatusLogger());
 
         Task saved = taskRepositoryPort.save(task);
-
         logger.info("Saved task: " + saved.getTaskId());
 
-        TaskStatusLogger loggerObserver = new TaskStatusLogger();
-        task.addObserver(loggerObserver);
-
-//        CompletableFuture.runAsync(() -> taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), saved));
-        taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), saved);
-        return this.initializeBatches(saved);
+        taskMessagePort.sendTaskUpdateMessage(TaskMapper.toTaskUpdateMessage(task));
+        this.initializeBatches(saved);
+        this.startTask(saved.getTaskId());
+        return saved.getTaskId();
     }
 
-    public UUID createNewTaskFromNetwork(TaskFromNetworkMessage newTaskRequestFromNetwork) {
+    public UUID createNewTaskFromNetwork(TaskUpdateMessage newTaskRequestFromNetwork) {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
 
         Task task = taskFactory.createTask(newTaskRequestFromNetwork, strategy);
@@ -135,8 +124,6 @@ public class TaskControllerImpl implements TaskController {
         TaskStatusLogger loggerObserver = new TaskStatusLogger();
         task.addObserver(loggerObserver);
 
-//        Task finalTask = task;
-//        CompletableFuture.runAsync(() -> this.initializeBatches(finalTask));
         return this.initializeBatches(task);
     }
 
@@ -192,17 +179,12 @@ public class TaskControllerImpl implements TaskController {
                 });
     }
 
-
-
-
     public void stopTask(UUID taskId) {
         taskThreads.get(taskId).stopTask();
-//        taskThreads.remove(taskId);
     }
 
     public void stopTask(TaskThread taskThread) {
         taskThread.stopTask();
-//        taskThreads.remove(taskThread.getTaskId());
     }
 
     private BigInteger calculateTotalPermutations(int alphabetLength, Long maxLength) {
@@ -237,7 +219,7 @@ public class TaskControllerImpl implements TaskController {
     private void callbackBatchUpdate(BatchUpdateDto batchUpdateMessage) {
         logger.info("Batch update for task: " + batchUpdateMessage.getTaskId() + " batch: " + batchUpdateMessage.getBatchId() + " status: " + batchUpdateMessage.getBatchStatus());
         batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
-        taskMessagePort.sendBatchUpdateMessage(networkManager.getNodes(), batchUpdateMessage);
+        taskMessagePort.sendBatchUpdateMessage(batchUpdateMessage);
         if(batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
 
             Task task = taskRepositoryPort.getById(batchUpdateMessage.getTaskId()).orElseThrow(() -> new RuntimeException("Task not found"));
@@ -246,7 +228,7 @@ public class TaskControllerImpl implements TaskController {
             taskRepositoryPort.save(task);
             doneTaskProcessor.processDoneTask(task);
 
-            taskMessagePort.sendTaskUpdateMessage(networkManager.getNodes(), task);
+            taskMessagePort.sendTaskUpdateMessage(task);
             logger.info("Stop task: " + batchUpdateMessage.getTaskId());
             this.stopTask(batchUpdateMessage.getTaskId());
         }

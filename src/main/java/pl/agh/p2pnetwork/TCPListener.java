@@ -9,13 +9,12 @@ import pl.agh.middleware.DoneTaskProcessor;
 import pl.agh.middleware.model.BatchUpdateMessage;
 import pl.agh.middleware.model.MemoryDumpMessage;
 import pl.agh.middleware.model.NewTaskRequest;
-import pl.agh.middleware.model.TaskFromNetworkMessage;
+import pl.agh.middleware.model.TaskUpdateMessage;
 import pl.agh.task.TaskControllerImpl;
 import pl.agh.p2pnetwork.model.Node;
 import pl.agh.p2pnetwork.model.dto.BaseMessage;
 import pl.agh.p2pnetwork.model.dto.message.UpdateNetworkMessage;
 import pl.agh.p2pnetwork.model.dto.request.JoinToNetworkRequest;
-import pl.agh.task.model.Task;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -49,29 +48,7 @@ public class TCPListener {
         listenerThread.start();
     }
 
-    private void start() {
-        running = true;
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            logger.info("Serwer nasłuchuje na porcie: " + port);
 
-            while (running) {
-                Socket clientSocket = serverSocket.accept();
-//                clientSocket.setReuseAddress(true);
-//                clientSocket.setSoTimeout(500);
-                logger.info("Nowe połączenie: " + clientSocket.getInetAddress());
-                new Thread(() -> handleClient(clientSocket)).start();
-            }
-        } catch (Exception e) {
-            logger.error("Błąd serwera: " + e.getMessage());
-        }
-    }
-
-
-    // Metoda do zatrzymywania nasłuchiwania
-    public void stop() {
-        running = false;
-        logger.info("Serwer został zatrzymany.");
-    }
 
     // Obsługa klienta
     private void handleClient(Socket clientSocket) {
@@ -84,30 +61,16 @@ public class TCPListener {
                 BaseMessage myMessage = MessageProcessor.parseMessage(message);
 
                 switch (myMessage) {
-                    case JoinToNetworkRequest joinRequest -> {
-                        String response = handleJoinToNetworkRequest(joinRequest);
-                        networkManager.sendMessageRaw(joinRequest.getNewNode().getIp(), joinRequest.getNewNode().getPort(), response);
-//                        out.println(response);
-                    }
                     case UpdateNetworkMessage updateMessage -> handleUpdateNetworkMessage(updateMessage);
                     case NewTaskRequest newTaskRequest -> {
                         UUID taskId = handleNewTaskRequest(newTaskRequest);
                         out.println(taskId.toString());
                     }
-                    case TaskFromNetworkMessage newTaskFromNetwork -> handleNewTaskFromNetwork(newTaskFromNetwork);
+                    case TaskUpdateMessage newTaskFromNetwork -> handleNewTaskFromNetwork(newTaskFromNetwork);
                     case BatchUpdateMessage newBatchUpdateMessage -> handleBatchUpdateMessage(newBatchUpdateMessage);
                     case MemoryDumpMessage memoryDumpMessage -> handleMemoryDumpMessage(memoryDumpMessage);
                     default -> logger.info("Nieobsługiwany typ wiadomości: " + myMessage.getClass().getSimpleName());
                 }
-            }
-        } catch (Exception e) {
-            // TODO remove node, and inform network ?
-            logger.error("Błąd obsługi klienta: " + e.getMessage());
-        } finally {
-            try {
-                clientSocket.close();
-            } catch (Exception e) {
-                logger.error("Błąd podczas zamykania połączenia: " + e.getMessage());
             }
         }
     }
@@ -122,32 +85,19 @@ public class TCPListener {
                 handleBatchUpdateMessage(new BatchUpdateMessage(batch)));
     }
 
-    private String handleJoinToNetworkRequest(JoinToNetworkRequest joinRequest) {
-        logger.info("Handle join to network request - Send memory dump as response");
-        networkManager.addNewNodeToNetwork(joinRequest);
-        try{
-            String response = objectMapper.writeValueAsString(taskController.getMemoryDump());
-            logger.info("Memory dump to be sent");
-            return response;
-        } catch (JsonProcessingException e) {
-            return "";
-        }
-    }
-
     private void handleUpdateNetworkMessage(UpdateNetworkMessage updateMessage) {
         logger.info("Handle update network message - Add new nodes: " + updateMessage.getNodes());
         networkManager.updateNetwork(updateMessage);
     }
 
     private UUID handleNewTaskRequest(NewTaskRequest newTaskRequest) {
-        logger.info("Handle new task request");
+        logger.info("TCPListener.handleNewTaskRequest - invoked");
         UUID taskId = taskController.createNewTask(TaskMapper.toDto(newTaskRequest));
         logger.info("New task id: " + taskId);
-        taskController.startTask(taskId);
         return taskId;
     }
 
-    private void handleNewTaskFromNetwork(TaskFromNetworkMessage newTaskRequestFromNetwork) {
+    private void handleNewTaskFromNetwork(TaskUpdateMessage newTaskRequestFromNetwork) {
         try {
             logger.info("Handle new task from network " + newTaskRequestFromNetwork.getTaskId());
 
