@@ -59,7 +59,7 @@ public class NetworkManager {
 //    }
 
     public void addNewNodeToNetwork(JoinToNetworkRequest joinToNetworkRequest) {
-
+        Node newNode = joinToNetworkRequest.getNewNode();
 
 
 
@@ -74,8 +74,6 @@ public class NetworkManager {
 
         String newNodeIp = joinToNetworkRequest.getNewNode().getIp();
         int newNodePort = joinToNetworkRequest.getNewNode().getPort();
-
-        logger.info("New node joins the network, check current network status");
 
         Set<Node> duplicates = nodes.stream().filter(node ->
                 (node.getPort() == newNodePort && Objects.equals(node.getIp(), newNodeIp))).collect(Collectors.toSet());
