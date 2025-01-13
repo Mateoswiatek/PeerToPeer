@@ -17,6 +17,7 @@ import java.net.Socket;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class NetworkManager {
@@ -28,6 +29,11 @@ public class NetworkManager {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Logger logger = Logger.getInstance();
+
+
+//    private class
+
+
 
     public NetworkManager(Node myself, P2PTCPListener p2pTCPListener, P2PTCPSender p2pTCPSender) {
         this.myself = myself;
@@ -47,16 +53,17 @@ public class NetworkManager {
         listenerThread.start();
     }
 
+    public void startNetwork() {
+        p2pTCPListener.startListener();;
+    }
+
     public void connectMyselfToNetwork(String ip, int port) throws IOException {
         logger.info("connect to Network invoked. ip: " + ip + ", port: " + port);
-        p2pTCPSender.sendJoinToNetworkRequest(ip, port, new JoinToNetworkRequest(myself));
+        p2pTCPSender.sendMessageToNode(new Node(UUID.randomUUID(), ip, port), new JoinToNetworkRequest(myself));
     }
 
 
-//
-//    public void connectMyselfToNetwork(String ip, Integer port) {
-//        sendMessage(ip, port, new JoinToNetworkRequest(myself));
-//    }
+
 
     public void addNewNodeToNetwork(JoinToNetworkRequest joinToNetworkRequest) {
         Node newNode = joinToNetworkRequest.getNewNode();

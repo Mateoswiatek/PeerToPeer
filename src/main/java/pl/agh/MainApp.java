@@ -9,6 +9,7 @@ import pl.agh.p2pnetwork.NetworkManager;
 import pl.agh.p2pnetwork.TCPListener;
 import pl.agh.task.impl.InMemoryTaskRepositoryAdapter;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
@@ -18,7 +19,7 @@ public class MainApp {
 //    5000
 //    5001 192.168.0.110 5000
 //    5001 localhost 5000
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         for (String arg : args) {
             System.out.println(arg);
         }

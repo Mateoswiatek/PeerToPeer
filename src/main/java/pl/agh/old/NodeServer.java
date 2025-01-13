@@ -44,7 +44,7 @@ public class NodeServer {
 
 //        knownNodes.forEach(node -> {
 //            try {
-//                node.sendMessage(message);
+//                node.sendMessageToNodes(message);
 //            } catch (IOException e) {
 //                throw new RuntimeException(e);
 //            }

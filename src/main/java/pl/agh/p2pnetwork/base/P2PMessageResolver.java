@@ -24,17 +24,27 @@ public abstract class P2PMessageResolver {
         };
     }
 
+    public String parseToJson(BaseMessage message) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(message);
+    }
+
     public String createMessage(BaseMessage baseMessage) {
         return switch (baseMessage.getType()) {
-            case "JoinToNetworkRequest" -> {yield "";}
+//            case "JoinToNetworkRequest" -> this.defaultWritterAsString(baseMessage);
             default -> messageOverP2P(baseMessage);
         };
     }
 
     protected abstract BaseMessage messageOverP2P(String jsonMessage);
-    protected abstract String messageOverP2P(BaseMessage baseMessage);
-
-    public String parseToJson(BaseMessage message) throws JsonProcessingException {
-        return objectMapper.writeValueAsString(message);
+    protected String messageOverP2P(BaseMessage baseMessage) {
+        String requestJson = "";
+        try {
+            requestJson = objectMapper.writeValueAsString(baseMessage);
+        } catch (JsonProcessingException e) {
+            System.err.println("P2PMessageResolver.defaultWritterAsString error:  " + e.getMessage());
+        }
+        return requestJson;
     }
+
+
 }

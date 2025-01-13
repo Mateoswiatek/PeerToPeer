@@ -29,13 +29,13 @@
 //
 //    @Override
 //    public void sendBatchUpdateMessage(BatchUpdateDto message) {
-//        activeNodes.forEach( node -> networkManager.sendMessage(
+//        activeNodes.forEach( node -> networkManager.sendMessageToNodes(
 //                node.getIp(), node.getPort(), new BatchUpdateMessage(message)));
 //    }
 //
 //    @Override
 //    public void sendTaskUpdateMessage(Task newTask) {
-//        activeNodes.forEach( node -> networkManager.sendMessage
+//        activeNodes.forEach( node -> networkManager.sendMessageToNodes
 //                (node.getIp(), node.getPort(), new TaskFromNetworkMessage(newTask)));
 //    }
 //}
