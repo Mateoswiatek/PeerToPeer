@@ -1,4 +1,4 @@
-package pl.agh.task.impl;
+package pl.agh.middleware.task;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

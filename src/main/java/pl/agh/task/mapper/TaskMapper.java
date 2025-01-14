@@ -1,6 +1,6 @@
 package pl.agh.task.mapper;
 
-import pl.agh.task.impl.TaskExecutionStrategy;
+import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.dto.TaskUpdateMessageDto;
 

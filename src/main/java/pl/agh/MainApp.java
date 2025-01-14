@@ -11,8 +11,6 @@ public class MainApp {
 
         AppMiddleware appMiddleware = new AppMiddleware(args);
         NetworkManager networkManager = appMiddleware.getNetworkManager();
-//        TaskController taskController = appMiddleware.getTaskController();
-
 
         // Czy podłączamy się do sieci, czy jest to pierwszy node
         if (args.length == 3) {

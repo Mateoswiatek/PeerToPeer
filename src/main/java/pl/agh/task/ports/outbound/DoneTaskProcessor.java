@@ -1,4 +1,4 @@
-package pl.agh.middleware.task;
+package pl.agh.task.ports.outbound;
 
 import pl.agh.task.model.Task;
 

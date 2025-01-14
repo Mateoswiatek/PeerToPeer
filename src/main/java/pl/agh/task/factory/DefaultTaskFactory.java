@@ -1,8 +1,7 @@
 package pl.agh.task.factory;
 
 import pl.agh.logger.Logger;
-import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
-import pl.agh.task.impl.TaskExecutionStrategy;
+import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.dto.TaskUpdateMessageDto;

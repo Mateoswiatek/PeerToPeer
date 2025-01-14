@@ -1,9 +1,9 @@
-package pl.agh.task.impl;
+package pl.agh.middleware.task;
 
 import pl.agh.task.PermutationIterator;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.Task;
-import pl.agh.task.impl.TaskExecutionStrategy;
+import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;

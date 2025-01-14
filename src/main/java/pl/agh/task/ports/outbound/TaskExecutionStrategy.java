@@ -1,4 +1,4 @@
-package pl.agh.task.impl;
+package pl.agh.task.ports.outbound;
 
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.Task;

@@ -2,10 +2,10 @@ package pl.agh.task;
 
 import lombok.AllArgsConstructor;
 import pl.agh.logger.Logger;
-import pl.agh.middleware.task.DoneTaskProcessor;
+import pl.agh.task.ports.outbound.DoneTaskProcessor;
 import pl.agh.task.factory.TaskFactory;
-import pl.agh.task.impl.SHA256TaskExecutionStrategy;
-import pl.agh.task.impl.TaskExecutionStrategy;
+import pl.agh.middleware.task.SHA256TaskExecutionStrategy;
+import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 import pl.agh.task.mapper.BatchMapper;
 import pl.agh.task.mapper.TaskMapper;
 import pl.agh.task.model.Batch;
