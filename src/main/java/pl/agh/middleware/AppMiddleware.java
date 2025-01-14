@@ -2,12 +2,14 @@ package pl.agh.middleware;
 
 import lombok.Getter;
 import pl.agh.logger.Logger;
+import pl.agh.middleware.mapper.BatchMapper;
 import pl.agh.middleware.mapper.TaskMapper;
 import pl.agh.middleware.model.BatchUpdateMessage;
 import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.middleware.p2p.model.task.NewTaskRequest;
 import pl.agh.middleware.p2p.P2PMessageResolverHashImpl;
 import pl.agh.middleware.p2p.model.task.NewTaskResponse;
+import pl.agh.middleware.p2p.model.task.TaskUpdateMessageRequestMessage;
 import pl.agh.middleware.task.DoneTaskProcessor;
 import pl.agh.middleware.task.DoneTaskProcessorToFileImpl;
 import pl.agh.p2pnetwork.NetworkManagerImpl;
@@ -23,9 +25,11 @@ import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
 import pl.agh.task.impl.InMemoryTaskRepositoryAdapter;
 import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.model.dto.TaskUpdateMessageDto;
+import pl.agh.task.model.dto.TaskUpdateMessageRequestDto;
 import pl.agh.task.ports.inbound.TaskController;
 import pl.agh.task.ports.outbound.TaskMessageSenderPort;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -75,8 +79,8 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
         return switch (baseMessage) {
             case NewTaskRequest newTaskRequest -> handleNewTaskRequest(newTaskRequest);
             case TaskUpdateMessage taskUpdateMessage -> handleTaskUpdateMessage(taskUpdateMessage);
-//            case BatchUpdateMessage batchUpdateMessage -> handleBatchUpdateMessage(batchUpdateMessage);
-
+            case BatchUpdateMessage batchUpdateMessage -> handleBatchUpdateMessage(batchUpdateMessage);
+            case TaskUpdateMessageRequestMessage taskUpdateMessageRequestMessage -> handleTaskUpdateMessageRequestMessage(taskUpdateMessageRequestMessage);
             default -> throw new IllegalStateException("Unexpected value: " + baseMessage);
         };
     }
@@ -90,10 +94,17 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
         taskController.updateTask(TaskMapper.toTaskUpdateMessageDto(taskUpdateMessage));
         return null;
     }
-//    private BaseMessage handleBatchUpdateMessage(BatchUpdateMessage batchUpdateMessage) {
-//        logger.info("batchUpdateMessage: " + batchUpdateMessage.toString());
-//        return null;
-//    }
+
+    private BaseMessage handleBatchUpdateMessage(BatchUpdateMessage batchUpdateMessage) {
+        return taskController.updateBatch(BatchMapper.toBatchUpdateDto(batchUpdateMessage))
+                .map(taskUpdateMessageRequestDto ->
+                        TaskMapper.toTaskUpdateMessageRequestMessage(taskUpdateMessageRequestDto, networkManager.getMyself())).orElse(null);
+    }
+
+    private BaseMessage handleTaskUpdateMessageRequestMessage(TaskUpdateMessageRequestMessage taskUpdateMessageRequestMessage) {
+        logger.info("będziemy wysyłać update bezpośrednio do noda: " + taskUpdateMessageRequestMessage.getNode().toString());
+        return null;
+    }
 
     @Override
     public void sendTaskUpdateMessage(TaskUpdateMessageDto taskUpdateMessageDto) {
@@ -102,8 +113,7 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
 
     @Override
     public void sendBatchUpdateMessage(BatchUpdateDto message) {
-        logger.info("we will send BatchUpdateDto...");
-//        networkManager.sendMessageToNetwork(BatchMapper.toBatchUpdateMessage(message));
+        networkManager.sendMessageToNetwork(BatchMapper.toTaskUpdateMessage(message));
     }
 
 

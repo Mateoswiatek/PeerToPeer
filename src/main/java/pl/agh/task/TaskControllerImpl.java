@@ -9,6 +9,7 @@ import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.mapper.TaskMapper;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.dto.TaskUpdateMessageDto;
+import pl.agh.task.model.dto.TaskUpdateMessageRequestDto;
 import pl.agh.task.model.enumerated.BatchStatus;
 import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.model.dto.NewTaskDto;
@@ -95,77 +96,30 @@ public class TaskControllerImpl implements TaskController {
         }
     }
 
-    private Task prepareAndStartNewTask(NewTaskDto newTaskRequest) {
-        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
+    @Override
+    public Optional<TaskUpdateMessageRequestDto> updateBatch(BatchUpdateDto batchUpdateMessage) {
+        logger.info("TaskController.updateBatch - received batch update message");
 
-        Task task = taskFactory.createTask(newTaskRequest, strategy);
-        task.addObserver(new TaskStatusLogger());
-        task.setTaskStatus(TaskStatus.IN_PROGRESS);
+        //TODO (14.01.2025): Zrobić update, tak aby przeszło wszystko.
 
-        Task saved = taskRepositoryPort.save(task);
-        logger.info("Saved prepared task: " + saved.getTaskId());
-        this.initializeBatches(saved);
-        this.startTask(saved.getTaskId());
+        // Jeśli nie mamy info, to wysyłamy requesta
+        if(taskRepositoryPort.getById(batchUpdateMessage.getTaskId()).isEmpty()) {
+            return Optional.of(TaskUpdateMessageRequestDto.create(batchUpdateMessage.getTaskId()));
+        }
 
-        return saved;
-    }
-
-    private void startTask(UUID taskId) {
-        logger.info("Start new task: " + taskId);
-        taskThreads.computeIfAbsent(
-                taskId,
-                newThreadTaskId -> {
-                    TaskThread taskThread = new TaskThread(
-                            this::getNextBatch,
-                            this::callbackBatchUpdate,
-                            id -> taskRepositoryPort.getById(id)
-                                    .orElseThrow(() -> new RuntimeException("Task not found: " + id)), // Funkcja dostarczająca Task
-                            taskId, // ID zadania
-                            null // aktualny batch
-                    );
-
-                    Thread thread = new Thread(taskThread);
-                    thread.start();
-                    return taskThread;
-                });
-    }
-
-    private void processDoneTask(Task task) {
-        doneTaskProcessor.processDoneTask(task);
-        batchRepository.deleteByTaskId(task.getTaskId());
+        return Optional.empty();
     }
 
 
-
-
-////    To ma być na zwrotce do noda ktory się podłączył.
-//    public MemoryDumpMessage getMemoryDump() {
-//        List<TaskUpdateMessage> tasks = taskRepositoryPort.findAll().stream().map(task -> {
-//            logger.info("Task ID: " + task.getTaskId());
-//            return TaskMapper.toTaskFromNetworkMessage(task);
-//        }).toList();
-//        List<Batch> batches = batchRepository.findAll();
-//
-//        List<TaskUpdateMessage> doneTasks = tasks.stream().filter(t -> t.getTaskStatus().equals(TaskStatus.DONE)).toList();
-//
-//        List<BatchUpdateDto> batchesUpdateDtoList = batchRepository.findAll().stream()
-//                .filter(b -> !b.getStatus().equals(BatchStatus.FOUND))
-//                .map(b -> BatchMapper.toBatchUpdateDto(b, null)).collect(toList());
-//
-//        List<BatchUpdateDto> doneBatches = batches.stream().filter(b -> b.getStatus().equals(BatchStatus.FOUND)).map(b -> {
-//                TaskUpdateMessage thisTask = doneTasks.stream().filter(dt -> dt.getTaskId().equals(b.getTaskId())).findFirst().orElseThrow();
-//                return BatchMapper.toBatchUpdateDto(b, thisTask.getResult());
-//            }).toList();
-//
-//        batchesUpdateDtoList.addAll(doneBatches);
-//
-//        return new MemoryDumpMessage("MemoryDumpMessage", tasks, batchesUpdateDtoList);
-//    }
+    //TODO (14.01.2025): Zrobić, że wysyła requesta do tego, który wysłał mu info o batchu z zadania, którego nie ma.
+    // Podłączanie się do pracy.
+// Nie musimy aktulaizować taska, bo on przyjdzie jako TaskUpdate. Ale dla pewności i tak zapiszemy go ręcznie i przeprocesujemy.
     /**
      *  Przetwarza wiadomości z innych systeów pracujących przy tym samym zadaniu.
+     *  Jeśli dostał update Batcha z zadania którego nie ma, to wysła requesta po taska do tego od którego otrzymał.
      *  Aktualizuje swoją bazę wiedzy, Jeśli pracuje nad danym taskiem to:
      *  - Jeśli dostał aktualizację z tego samego batcha informującą, że jest zrobiony, to przerywa tego batcha i zaczyna innego.
-     *  - Jeśli dostał info, że znaleziono rozwiązanie dla danego zadania, to przerywa.
+     *  - Jeśli dostał info, że znaleziono rozwiązanie dla danego zadania, to przerywa i procesuje
      * @param batchUpdateMessage
      */
     public void receiveBatchUpdateMessage(BatchUpdateDto batchUpdateMessage) {
@@ -195,6 +149,72 @@ public class TaskControllerImpl implements TaskController {
     }
 
 
+// Update wszystkich tasków, handler sobie poradzi
+// Update batchy, których taski jeszcze nie są zrobione (czyli aktualnie są przetwarzane).
+// W teorii wystarczyłoby wysłać wszystkie, bo już mamy ograne, że usuwamy ze zrobionych tasków.
+
+////    To ma być na zwrotce do noda ktory się podłączył.
+//    public MemoryDumpMessage getMemoryDump() {
+//        List<TaskUpdateMessage> tasks = taskRepositoryPort.findAll().stream().map(task -> {
+//            logger.info("Task ID: " + task.getTaskId());
+//            return TaskMapper.toTaskFromNetworkMessage(task);
+//        }).toList();
+//        List<Batch> batches = batchRepository.findAll();
+//
+//        List<TaskUpdateMessage> doneTasks = tasks.stream().filter(t -> t.getTaskStatus().equals(TaskStatus.DONE)).toList();
+//
+//        List<BatchUpdateDto> batchesUpdateDtoList = batchRepository.findAll().stream()
+//                .filter(b -> !b.getStatus().equals(BatchStatus.FOUND))
+//                .map(b -> BatchMapper.toBatchUpdateDto(b, null)).collect(toList());
+//
+//        List<BatchUpdateDto> doneBatches = batches.stream().filter(b -> b.getStatus().equals(BatchStatus.FOUND)).map(b -> {
+//                TaskUpdateMessage thisTask = doneTasks.stream().filter(dt -> dt.getTaskId().equals(b.getTaskId())).findFirst().orElseThrow();
+//                return BatchMapper.toBatchUpdateDto(b, thisTask.getResult());
+//            }).toList();
+//
+//        batchesUpdateDtoList.addAll(doneBatches);
+//
+//        return new MemoryDumpMessage("MemoryDumpMessage", tasks, batchesUpdateDtoList);
+//    }
+
+    private Task prepareAndStartNewTask(NewTaskDto newTaskRequest) {
+        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
+
+        Task task = taskFactory.createTask(newTaskRequest, strategy);
+        task.addObserver(new TaskStatusLogger());
+        task.setTaskStatus(TaskStatus.IN_PROGRESS);
+
+        Task saved = taskRepositoryPort.save(task);
+        logger.info("Saved prepared task: " + saved.getTaskId());
+        this.initializeBatches(saved);
+        this.startTask(saved.getTaskId());
+
+        return saved;
+    }
+
+    private void startTask(UUID taskId) {
+        logger.info("Start new task: " + taskId);
+        taskThreads.computeIfAbsent(
+                taskId,
+                newThreadTaskId -> {
+                    TaskThread taskThread = new TaskThread(
+                            this::getNextBatch,
+                            this::callbackBatchUpdate,
+                            id -> taskRepositoryPort.getById(id).orElseThrow(() -> new RuntimeException("Task not found: " + id)), // Funkcja dostarczająca Task
+                            taskId, // ID zadania
+                            null // aktualny batch
+                    );
+
+                    Thread thread = new Thread(taskThread);
+                    thread.start();
+                    return taskThread;
+                });
+    }
+
+    private void processDoneTask(Task task) {
+        doneTaskProcessor.processDoneTask(task);
+        batchRepository.deleteByTaskId(task.getTaskId());
+    }
 
     private void stopTask(UUID taskId) {
         taskThreads.get(taskId).stopTask();
@@ -221,8 +241,6 @@ public class TaskControllerImpl implements TaskController {
             this.stopTask(batchUpdateMessage.getTaskId());
         }
     }
-
-
 
     // Methods for batches and algorithm
 

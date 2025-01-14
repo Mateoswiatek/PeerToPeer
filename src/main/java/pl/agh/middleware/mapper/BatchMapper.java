@@ -1,46 +1,32 @@
-//package pl.agh.middleware.mapper;
-//
-//import pl.agh.middleware.model.BatchUpdateMessage;
-//import pl.agh.task.model.Batch;
-//import pl.agh.task.model.dto.BatchUpdateDto;
-//
-//public class BatchMapper {
-//
-//    public static BatchUpdateMessage toBatchUpdateMessage(BatchUpdateDto batchUpdateDto) {
-//        return new BatchUpdateMessage(batchUpdateDto.getTaskId(),
-//                batchUpdateDto.getBatchId(),
-//                batchUpdateDto.getBatchStatus(),
-//                batchUpdateDto.getResult());
-//    }
-//
-//
-//    // Mapowanie z Batch na BatchUpdateDto
-//    public static BatchUpdateDto toBatchUpdateDto(Batch batch, String result) {
-//        return BatchUpdateDto.builder()
-//                .taskId(batch.getTaskId())
-//                .batchId(batch.getBatchId())
-//                .batchStatus(batch.getStatus())
-//                .result(result)
-//                .build();
-//    }
-//
-//    // Mapowanie z BatchUpdateDto na Batch
-//    public static Batch toBatch(BatchUpdateDto batchUpdateDto) {
-//        return new Batch(
-//                batchUpdateDto.getTaskId(),
-//                batchUpdateDto.getBatchId(),
-//                null, // Brak danych dla `min`
-//                null, // Brak danych dla `max`
-//                batchUpdateDto.getBatchStatus()
-//        );
-//    }
-//
-//    public static BatchUpdateDto messageToBatchUpdateDto(BatchUpdateMessage batchUpdateMessage) {
-//        return BatchUpdateDto.builder()
-//                .taskId(batchUpdateMessage.getTaskId())
-//                .batchId(batchUpdateMessage.getBatchId())
-//                .batchStatus(batchUpdateMessage.getBatchStatus())
-//                .result(batchUpdateMessage.getResult())
-//                .build();
-//    }
-//}
+package pl.agh.middleware.mapper;
+
+import pl.agh.middleware.model.BatchUpdateMessage;
+import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
+import pl.agh.task.model.Batch;
+import pl.agh.task.model.dto.BatchUpdateDto;
+import pl.agh.task.model.enumerated.BatchStatus;
+
+public class BatchMapper {
+    public static BatchUpdateDto toBatchUpdateDto(BatchUpdateMessage batch) {
+        return new BatchUpdateDto(batch.getTaskId(),
+                batch.getBatchId(),
+                batch.getBatchStatus(),
+                batch.getResult());
+    }
+
+
+    public static BatchUpdateDto getFromBatchWithStatus(Batch batch, BatchStatus newStatus) {
+        return new BatchUpdateDto(batch.getTaskId(),
+                batch.getBatchId(),
+                newStatus,
+                null);
+    }
+
+    public static BatchUpdateMessage toTaskUpdateMessage(BatchUpdateDto batch) {
+        return new BatchUpdateMessage(batch.getTaskId(),
+                batch.getBatchId(),
+                batch.getBatchStatus(),
+                batch.getResult());
+    }
+
+}

@@ -125,6 +125,7 @@ public class NetworkManagerImpl implements NetworkManager {
                     BaseMessage baseMessage = messageResolver.deserializeMessage(message);
                     BaseMessage response = messageHandler.apply(baseMessage);
                     if (response != null) {
+                        logger.info("wysyłamy wiadomość!!!");
                         out.println(messageResolver.serializeMessage(response));
                     }
                 }
@@ -179,6 +180,11 @@ public class NetworkManagerImpl implements NetworkManager {
     public void updateNetwork() {
         Set<Node> disconnectedNodes = p2pTCPSender.sendMessageToNodes(nodesInNetwork, Ping.ping());
         nodesInNetwork.removeAll(disconnectedNodes);
+    }
+
+    @Override
+    public Node getMyself() {
+        return this.myself;
     }
 
     @Override

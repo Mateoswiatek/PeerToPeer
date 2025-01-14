@@ -71,12 +71,12 @@ public class InMemoryBatchRepositoryAdapter implements BatchRepositoryPort {
     public void updateStatus(UUID taskId, Long id, BatchStatus status) {
         findByTaskIdAndBatchId(taskId, id).ifPresentOrElse(
                 batch -> batch.setStatus(status),
-                () -> {logger.error("Batch not found for id: " + id);}
+                () -> logger.error("Batch not found for id: " + id)
         );
     }
 
     @Override
     public void deleteByTaskId(UUID taskId) {
-
+        taskIdIndex.remove(taskId);
     }
 }
