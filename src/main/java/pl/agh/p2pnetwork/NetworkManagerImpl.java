@@ -128,10 +128,10 @@ public class NetworkManagerImpl implements NetworkManager {
                 while ((message = in.readLine()) != null) {
                     BaseMessage baseMessage = messageResolver.deserializeMessage(message);
                     BaseMessage response = messageHandler.apply(baseMessage);
-                    if (response != null) {
-                        logger.info("wysyłamy wiadomość w nowym watku!!!");
-                        new Thread(() -> out.println(messageResolver.serializeMessage(response))).start();
-                    }
+//                    if (response != null) {
+//                        logger.info("wysyłamy wiadomość w nowym watku!!!");
+//                        new Thread(() -> out.println(messageResolver.serializeMessage(response))).start();
+//                    }
                 }
             } catch (IOException e) {
                 logger.error("Błąd obsługi klienta: " + e.getMessage() + "\nMessage: " + message);
@@ -206,7 +206,7 @@ public class NetworkManagerImpl implements NetworkManager {
         };
     }
     private BaseMessage handlePing(Ping ping) {
-        logger.info("Ping: " + ping);
+//        logger.info("Ping: " + ping);
         return null;
     }
 

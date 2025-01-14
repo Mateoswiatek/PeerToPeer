@@ -16,7 +16,7 @@ public abstract class P2PMessageSerializer {
     public BaseMessage deserializeMessage(String jsonMessage) throws JsonProcessingException {
         JsonNode jsonNode = objectMapper.readTree(jsonMessage);
         String type = jsonNode.get("type").asText();
-        logger.info("P2PMessageResolver.deserializeMessage - invoked. Message type: " + type);
+        //logger.info("P2PMessageResolver.deserializeMessage - invoked. Message type: " + type);
 
         return switch (type) {
             case "JoinToNetworkRequest" -> objectMapper.treeToValue(jsonNode, JoinToNetworkRequest.class);

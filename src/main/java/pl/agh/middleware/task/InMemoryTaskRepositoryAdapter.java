@@ -28,7 +28,7 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
 
     @Override
     public Task save(Task task) {
-        logger.info("Save task to repository.");
+//        logger.info("Save task to repository.");
 
         if(task.getTaskId() == null) {
             task.setTaskId(UUID.randomUUID());
