@@ -1,4 +1,4 @@
-package pl.agh.middleware;
+package pl.agh.middleware.task;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

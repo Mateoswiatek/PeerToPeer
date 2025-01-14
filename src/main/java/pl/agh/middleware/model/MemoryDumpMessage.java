@@ -3,6 +3,7 @@ package pl.agh.middleware.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.p2pnetwork.model.dto.BaseMessage;
 import pl.agh.task.model.dto.BatchUpdateDto;
 

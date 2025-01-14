@@ -24,19 +24,21 @@ public class TaskThread implements Runnable {
     @Getter
     private final UUID taskId;
 
+    @Getter
+    private Batch currentBatch;
+
     @Override
     public void run() {
         logger.info("Start task thread");
         Optional<Batch> optionalBatch;
 
         while ((optionalBatch = batchProvider.apply(taskId)).isPresent()) {
-            Batch currentBatch = optionalBatch.get();
+            currentBatch = optionalBatch.get();
 
             try {
                 // Oznacz batch jako BOOKED
                 batchUpdateMessageCallback.accept(BatchUpdateDto.getFromBatchWithStatus(currentBatch, BatchStatus.BOOKED));
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.error("Error when trying to send booking message: " + e);
             }
 
@@ -45,7 +47,6 @@ public class TaskThread implements Runnable {
             task.execute(currentBatch);
 
             if (task.getResult() != null && !task.getResult().isEmpty()) {
-                // Jeśli znaleziono wynik, oznacz jako FOUND
                 logger.info("Batch finished - FOUND RESULT, send result info to network, result: " + task.getResult());
                 batchUpdateMessageCallback.accept(BatchUpdateDto.completeTask(currentBatch, task.getResult()));
                 break; // Kończymy przetwarzanie

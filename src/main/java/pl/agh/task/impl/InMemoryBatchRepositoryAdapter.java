@@ -17,7 +17,6 @@ public class InMemoryBatchRepositoryAdapter implements BatchRepositoryPort {
 
     private final Logger logger = Logger.getInstance();
 
-    // Klasa wewnętrzna, która trzyma jedyną instancję Singletona
     private static class SingletonHolder {
         private static final InMemoryBatchRepositoryAdapter INSTANCE = new InMemoryBatchRepositoryAdapter();
     }
@@ -72,25 +71,12 @@ public class InMemoryBatchRepositoryAdapter implements BatchRepositoryPort {
     public void updateStatus(UUID taskId, Long id, BatchStatus status) {
         findByTaskIdAndBatchId(taskId, id).ifPresentOrElse(
                 batch -> batch.setStatus(status),
-                () -> {
-                    logger.error("Batch not found for id: " + id);
-//                    throw new RuntimeException("Batch not found for id: " + id);
-                }
+                () -> {logger.error("Batch not found for id: " + id);}
         );
     }
 
-//    @Override
-//    public void update(Batch batch) {
-//        storage.put(batch.id(), batch);
-//    }
-//
-//    @Override
-//    public void deleteById(int id) {
-//        storage.remove(id);
-//    }
-//
-//    @Override
-//    public void deleteAll() {
-//        storage.clear();
-//    }
+    @Override
+    public void deleteByTaskId(UUID taskId) {
+
+    }
 }

@@ -15,6 +15,7 @@ public interface BatchRepositoryPort {
     List<Batch> findAllByStatusAndTaskId(BatchStatus status, UUID taskId);
     List<Batch> findAllByTaskId(UUID taskId);
     void updateStatus(UUID taskId, Long id, BatchStatus status);
+    void deleteByTaskId(UUID taskId);
 
 //    void update(Batch batch);
 //    void deleteById(int id);

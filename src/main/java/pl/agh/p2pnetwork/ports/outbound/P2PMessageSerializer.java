@@ -10,8 +10,8 @@ import pl.agh.p2pnetwork.model.dto.base.Ping;
 import pl.agh.p2pnetwork.model.dto.base.UpdateNetworkMessage;
 
 public abstract class P2PMessageSerializer {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final Logger logger = Logger.getInstance();
+    protected static final ObjectMapper objectMapper = new ObjectMapper();
+    protected static final Logger logger = Logger.getInstance();
 
     public BaseMessage deserializeMessage(String jsonMessage) throws JsonProcessingException {
         JsonNode jsonNode = objectMapper.readTree(jsonMessage);
@@ -33,7 +33,7 @@ public abstract class P2PMessageSerializer {
         };
     }
 
-    protected abstract BaseMessage deserializeMessageOverP2P(String jsonMessage);
+    protected abstract BaseMessage deserializeMessageOverP2P(String jsonMessage) throws JsonProcessingException;
 
     protected String serializeMessageOverP2P(BaseMessage baseMessage) {
         String requestJson = "";

@@ -1,4 +1,4 @@
-package pl.agh.middleware;
+package pl.agh.middleware.task;
 
 import pl.agh.task.model.Task;
 

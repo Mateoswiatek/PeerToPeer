@@ -17,12 +17,11 @@ public class BatchUpdateDto {
     private BatchStatus batchStatus;
     private String result;
 
-    @JsonCreator
     public BatchUpdateDto(
-            @JsonProperty("taskId") UUID taskId,
-            @JsonProperty("batchId") Long batchId,
-            @JsonProperty("batchStatus") BatchStatus batchStatus,
-            @JsonProperty("result") String result) {
+            UUID taskId,
+            Long batchId,
+            BatchStatus batchStatus,
+            String result) {
         this.taskId = taskId;
         this.batchId = batchId;
         this.batchStatus = batchStatus;

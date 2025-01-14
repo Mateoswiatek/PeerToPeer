@@ -27,7 +27,7 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
 
     @Override
     public Task save(Task task) {
-        logger.info("Save task to repository...");
+        logger.info("Save task to repository.");
 
         if(task.getTaskId() == null) {
             task.setTaskId(UUID.randomUUID());
@@ -37,25 +37,6 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
         // Nie ważne, czy został stworzony u nas, czy w innym node, zapisujemy.
         tasks.put(task.getTaskId(), task);
         return task;
-
-//        if(tasks.containsKey(task.getTaskId())) {
-//
-//        } else {
-//            Task newTask = new Task(
-//                    taskId,
-//                    task.getPasswordHash(),
-//                    task.getAlphabet(),
-//                    task.getMaxLength(),
-//                    task.getMaxBatchSize(),
-//                    task.getTaskStatus(),
-//                    task.getResult(),
-//                    task.getStrategy()
-//            );
-//
-//            logger.info("Task has no ID, put task with random ID: " + taskId);
-//            tasks.put(taskId, newTask);
-//            return newTask;
-//        }
     }
 
     @Override

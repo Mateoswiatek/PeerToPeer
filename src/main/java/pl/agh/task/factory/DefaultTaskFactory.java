@@ -1,7 +1,7 @@
 package pl.agh.task.factory;
 
 import pl.agh.logger.Logger;
-import pl.agh.middleware.model.TaskUpdateMessage;
+import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.dto.NewTaskDto;
@@ -29,23 +29,23 @@ public class DefaultTaskFactory implements TaskFactory {
         );
     }
 
-    @Override
-    public Task createTask(TaskUpdateMessage newTaskRequestFromNetwork, TaskExecutionStrategy strategy) {
-        logger.info("Task Factory - create task from network message");
-        // Pobierz status z NewTaskDto lub ustaw domyślny
-        TaskStatus taskStatus = newTaskRequestFromNetwork.getTaskStatus() != null
-                ? newTaskRequestFromNetwork.getTaskStatus()
-                : TaskStatus.CREATED;
-
-        return new Task(
-                newTaskRequestFromNetwork.getTaskId(),
-                newTaskRequestFromNetwork.getPasswordHash(),
-                newTaskRequestFromNetwork.getAlphabet(),
-                newTaskRequestFromNetwork.getMaxLength(),
-                newTaskRequestFromNetwork.getMaxBatchSize(),
-                taskStatus,
-                null,
-                strategy
-        );
-    }
+//    @Override
+//    public Task createTask(TaskUpdateMessage newTaskRequestFromNetwork, TaskExecutionStrategy strategy) {
+//        logger.info("Task Factory - create task from network message");
+//        // Pobierz status z NewTaskDto lub ustaw domyślny
+//        TaskStatus taskStatus = newTaskRequestFromNetwork.getTaskStatus() != null
+//                ? newTaskRequestFromNetwork.getTaskStatus()
+//                : TaskStatus.CREATED;
+//
+//        return new Task(
+//                newTaskRequestFromNetwork.getTaskId(),
+//                newTaskRequestFromNetwork.getPasswordHash(),
+//                newTaskRequestFromNetwork.getAlphabet(),
+//                newTaskRequestFromNetwork.getMaxLength(),
+//                newTaskRequestFromNetwork.getMaxBatchSize(),
+//                taskStatus,
+//                null,
+//                strategy
+//        );
+//    }
 }

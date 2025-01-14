@@ -1,11 +1,10 @@
-package pl.agh.middleware.model;
+package pl.agh.middleware.p2p.model.task;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import pl.agh.p2pnetwork.model.dto.BaseMessage;
-import pl.agh.task.model.Task;
 import pl.agh.task.model.enumerated.TaskStatus;
 
 import java.util.UUID;
@@ -38,17 +37,5 @@ public class TaskUpdateMessage extends BaseMessage {
         this.maxBatchSize = maxBatchSize;
         this.taskStatus = taskStatus;
         this.result = result;
-    }
-
-    public Task getTask() {
-        return new Task(
-                taskId,
-                passwordHash,
-                alphabet,
-                maxLength,
-                maxBatchSize,
-                taskStatus,
-                result,
-                null);
     }
 }

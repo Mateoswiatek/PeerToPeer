@@ -22,6 +22,7 @@ public class Task {
     private String alphabet;
     private Long maxLength;
     private Long maxBatchSize;
+    @Setter
     private TaskStatus taskStatus;
     private String result = "";
     private TaskExecutionStrategy strategy;
