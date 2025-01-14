@@ -1,4 +1,6 @@
-package pl.agh.task;
+package pl.agh;
+
+import pl.agh.task.PermutationIterator;
 
 import java.math.BigInteger;
 

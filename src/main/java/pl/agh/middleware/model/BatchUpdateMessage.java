@@ -30,12 +30,4 @@ public class BatchUpdateMessage extends BaseMessage {
         this.batchStatus = batchStatus;
         this.result = result;
     }
-
-    public BatchUpdateMessage(BatchUpdateDto batchUpdateDto) {
-        super(BatchUpdateMessage.class.getSimpleName());
-        this.taskId = batchUpdateDto.getTaskId();
-        this.batchId = batchUpdateDto.getBatchId();
-        this.batchStatus = batchUpdateDto.getBatchStatus();
-        this.result = batchUpdateDto.getResult();
-    }
 }

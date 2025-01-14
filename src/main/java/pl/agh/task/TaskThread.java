@@ -2,8 +2,8 @@ package pl.agh.task;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.extern.java.Log;
 import pl.agh.logger.Logger;
+import pl.agh.task.mapper.BatchMapper;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.enumerated.BatchStatus;
 import pl.agh.task.model.dto.BatchUpdateDto;
@@ -24,19 +24,21 @@ public class TaskThread implements Runnable {
     @Getter
     private final UUID taskId;
 
+    @Getter
+    private Batch currentBatch;
+
     @Override
     public void run() {
         logger.info("Start task thread");
         Optional<Batch> optionalBatch;
 
         while ((optionalBatch = batchProvider.apply(taskId)).isPresent()) {
-            Batch currentBatch = optionalBatch.get();
+            currentBatch = optionalBatch.get();
 
             try {
                 // Oznacz batch jako BOOKED
-                batchUpdateMessageCallback.accept(BatchUpdateDto.getFromBatchWithStatus(currentBatch, BatchStatus.BOOKED));
-            }
-            catch (Exception e) {
+                batchUpdateMessageCallback.accept(BatchMapper.getFromBatchWithStatus(currentBatch, BatchStatus.BOOKED));
+            } catch (Exception e) {
                 logger.error("Error when trying to send booking message: " + e);
             }
 
@@ -45,7 +47,6 @@ public class TaskThread implements Runnable {
             task.execute(currentBatch);
 
             if (task.getResult() != null && !task.getResult().isEmpty()) {
-                // Jeśli znaleziono wynik, oznacz jako FOUND
                 logger.info("Batch finished - FOUND RESULT, send result info to network, result: " + task.getResult());
                 batchUpdateMessageCallback.accept(BatchUpdateDto.completeTask(currentBatch, task.getResult()));
                 break; // Kończymy przetwarzanie
@@ -53,7 +54,7 @@ public class TaskThread implements Runnable {
 
             // Jeśli batch się zakończył, ale nie znaleziono wyniku
             logger.info("Batch finished, inform other network members. Task: " + currentBatch.getTaskId() + " Batch: " + currentBatch.getBatchId());
-            batchUpdateMessageCallback.accept(BatchUpdateDto.getFromBatchWithStatus(currentBatch, BatchStatus.DONE));
+            batchUpdateMessageCallback.accept(BatchMapper.getFromBatchWithStatus(currentBatch, BatchStatus.DONE));
         }
         logger.info("Task Thread finished");
     }

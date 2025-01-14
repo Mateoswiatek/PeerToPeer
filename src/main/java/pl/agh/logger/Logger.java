@@ -8,16 +8,34 @@ import java.time.format.DateTimeFormatter;
 
 public class Logger implements ILogger {
 
-    private static final String LOG_FILE_PATH = "app.log";
+    private String LOG_FILE_PATH;
+    private static volatile Logger instance;
 
-    private Logger() { }
+    private Logger(String fileName) {
+        this.LOG_FILE_PATH = fileName + "-app.log";
+    }
 
-    private static class SingletonHelper {
-        private static final Logger SINGLETON_INSTANCE = new Logger();
+    // Publiczna metoda dostępu
+    public static Logger getInstance(String fileName) {
+        if (instance == null) {
+            synchronized (Logger.class) { // Blok synchronizacyjny dla bezpieczeństwa wątków
+                if (instance == null) {
+                    instance = new Logger(fileName);
+                }
+            }
+        }
+        return instance;
     }
 
     public static Logger getInstance() {
-        return Logger.SingletonHelper.SINGLETON_INSTANCE;
+        if (instance == null) {
+            synchronized (Logger.class) {
+                if (instance == null) {
+                    instance = new Logger("app.log");
+                }
+            }
+        }
+        return instance;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package pl.agh.middleware.model;
+package pl.agh.middleware.p2p.model.task;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

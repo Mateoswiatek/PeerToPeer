@@ -1,8 +1,9 @@
-package pl.agh.middleware;
+package pl.agh.middleware.task;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import pl.agh.task.model.Task;
+import pl.agh.task.ports.outbound.DoneTaskProcessor;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

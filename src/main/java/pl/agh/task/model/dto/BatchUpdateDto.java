@@ -1,7 +1,5 @@
 package pl.agh.task.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 import pl.agh.task.model.Batch;
@@ -17,24 +15,15 @@ public class BatchUpdateDto {
     private BatchStatus batchStatus;
     private String result;
 
-    @JsonCreator
     public BatchUpdateDto(
-            @JsonProperty("taskId") UUID taskId,
-            @JsonProperty("batchId") Long batchId,
-            @JsonProperty("batchStatus") BatchStatus batchStatus,
-            @JsonProperty("result") String result) {
+            UUID taskId,
+            Long batchId,
+            BatchStatus batchStatus,
+            String result) {
         this.taskId = taskId;
         this.batchId = batchId;
         this.batchStatus = batchStatus;
         this.result = result;
-    }
-
-    public static BatchUpdateDto getFromBatchWithStatus(Batch batch, BatchStatus newStatus) {
-        return BatchUpdateDto.builder()
-                .taskId(batch.getTaskId())
-                .batchId(batch.getBatchId())
-                .batchStatus(newStatus)
-                .build();
     }
 
     public static BatchUpdateDto completeTask(Batch batch, String result) {

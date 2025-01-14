@@ -1,7 +1,5 @@
 package pl.agh.task.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import pl.agh.task.model.enumerated.BatchStatus;
@@ -18,17 +16,11 @@ public class Batch {
     private String max;
     private BatchStatus status;
 
-//    @JsonCreator
     public Batch(
-//            @JsonProperty("taskId")
             UUID taskId,
-//            @JsonProperty("batchId")
             Long batchId,
-//            @JsonProperty("min")
             String min,
-//            @JsonProperty("max")
             String max,
-//            @JsonProperty("status")
             BatchStatus status) {
         this.taskId = taskId;
         this.batchId = batchId;

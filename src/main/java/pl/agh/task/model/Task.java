@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import pl.agh.task.impl.TaskExecutionStrategy;
+import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 import pl.agh.task.model.enumerated.TaskStatus;
 
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ public class Task {
     private String alphabet;
     private Long maxLength;
     private Long maxBatchSize;
+    @Setter
     private TaskStatus taskStatus;
     private String result = "";
     private TaskExecutionStrategy strategy;

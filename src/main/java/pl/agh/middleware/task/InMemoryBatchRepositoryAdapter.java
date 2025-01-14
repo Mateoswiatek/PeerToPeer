@@ -1,8 +1,9 @@
-package pl.agh.task.impl;
+package pl.agh.middleware.task;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import pl.agh.logger.Logger;
+import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.ports.outbound.BatchRepositoryPort;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.enumerated.BatchStatus;
@@ -17,7 +18,6 @@ public class InMemoryBatchRepositoryAdapter implements BatchRepositoryPort {
 
     private final Logger logger = Logger.getInstance();
 
-    // Klasa wewnętrzna, która trzyma jedyną instancję Singletona
     private static class SingletonHolder {
         private static final InMemoryBatchRepositoryAdapter INSTANCE = new InMemoryBatchRepositoryAdapter();
     }
@@ -72,25 +72,47 @@ public class InMemoryBatchRepositoryAdapter implements BatchRepositoryPort {
     public void updateStatus(UUID taskId, Long id, BatchStatus status) {
         findByTaskIdAndBatchId(taskId, id).ifPresentOrElse(
                 batch -> batch.setStatus(status),
-                () -> {
-                    logger.error("Batch not found for id: " + id);
-//                    throw new RuntimeException("Batch not found for id: " + id);
-                }
+                () -> logger.error("Batch not found for id: " + id)
         );
     }
 
-//    @Override
-//    public void update(Batch batch) {
-//        storage.put(batch.id(), batch);
-//    }
+    @Override
+    public void deleteByTaskId(UUID taskId) {
+        taskIdIndex.remove(taskId);
+    }
+
+    @Override
+    public void updateStatusFromDump(List<BatchUpdateDto> batchUpdateDtos) {
+//        Map<UUID, List<BatchUpdateDto>> groupedBatches = batchUpdateDtos.stream()
+//                .collect(Collectors.groupingBy(BatchUpdateDto::getTaskId));
 //
-//    @Override
-//    public void deleteById(int id) {
-//        storage.remove(id);
-//    }
-//
-//    @Override
-//    public void deleteAll() {
-//        storage.clear();
-//    }
+//        groupedBatches.forEach((uuid, batchUpdateDtosForTask) -> {
+//                List<Batch> batchesDb = this.findAllByTaskId(uuid);
+//                    batchesDb.forEach(batch ->
+//                            batchUpdateDtosForTask.stream().filter(bDump -> batch.getBatchId().equals(bDump.getBatchId())).findFirst().ifPresent(
+//                                    batchUpdateDto -> batch.setStatus(batchUpdateDto.getBatchStatus())
+//                            ));
+//                });
+
+        Map<UUID, List<BatchUpdateDto>> groupedBatches = batchUpdateDtos.stream()
+                .collect(Collectors.groupingBy(BatchUpdateDto::getTaskId));
+
+        groupedBatches.forEach((taskId, batchUpdateDtosForTask) -> {
+            // Pobieranie batchów z bazy danych dla danego taskId
+            List<Batch> batchesDb = this.findAllByTaskId(taskId);
+
+            batchesDb.forEach(batch -> {
+                // Szukanie odpowiedniego batchUpdateDto dla batcha z bazy
+                batchUpdateDtosForTask.stream()
+                        .filter(batchUpdateDto -> batch.getBatchId().equals(batchUpdateDto.getBatchId()))
+                        .findFirst()
+                        .ifPresent(batchUpdateDto -> {
+                            // Aktualizacja statusu, jeśli obecny status nie jest DONE/FOUND
+                            if (!BatchStatus.DONE.equals(batch.getStatus()) && !BatchStatus.FOUND.equals(batch.getStatus())) {
+                                batch.setStatus(batchUpdateDto.getBatchStatus());
+                            }
+                        });
+            });
+        });
+    }
 }
