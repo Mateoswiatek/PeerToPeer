@@ -6,13 +6,11 @@ import pl.agh.middleware.task.DoneTaskProcessor;
 import pl.agh.task.factory.TaskFactory;
 import pl.agh.task.impl.SHA256TaskExecutionStrategy;
 import pl.agh.task.impl.TaskExecutionStrategy;
+import pl.agh.task.mapper.BatchMapper;
 import pl.agh.task.mapper.TaskMapper;
 import pl.agh.task.model.Batch;
-import pl.agh.task.model.dto.TaskUpdateMessageDto;
-import pl.agh.task.model.dto.TaskUpdateMessageRequestDto;
+import pl.agh.task.model.dto.*;
 import pl.agh.task.model.enumerated.BatchStatus;
-import pl.agh.task.model.dto.BatchUpdateDto;
-import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.enumerated.TaskStatus;
 import pl.agh.task.observer.TaskStatusLogger;
@@ -98,6 +96,30 @@ public class TaskControllerImpl implements TaskController {
         }
     }
 
+    private Task prepareAndStartNewTaskFromNetwork(TaskUpdateMessageDto newTaskRequest) {
+        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
+        Task task = taskFactory.createTaskFromNetwork(newTaskRequest, strategy);
+        return prepareAndStartNewTask(task);
+    }
+
+    private Task prepareAndStartNewTaskFromRequest(NewTaskDto newTaskRequest) {
+        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
+        Task task = taskFactory.createNewTaskFromRequest(newTaskRequest, strategy);
+        return prepareAndStartNewTask(task);
+    }
+
+    private Task prepareAndStartNewTask(Task task) {
+        task.addObserver(new TaskStatusLogger());
+        task.setTaskStatus(TaskStatus.IN_PROGRESS);
+
+        Task saved = taskRepositoryPort.save(task);
+        logger.info("Saved prepared task: " + saved.getTaskId());
+        this.initializeBatches(saved);
+        this.startTask(saved.getTaskId());
+
+        return saved;
+    }
+
     @Override
     public Optional<TaskUpdateMessageRequestDto> updateBatch(BatchUpdateDto batchUpdateMessage) {
         UUID taskId = batchUpdateMessage.getTaskId();
@@ -124,78 +146,49 @@ public class TaskControllerImpl implements TaskController {
                 batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
             }
         } else if(taskRepositoryPort.getById(batchUpdateMessage.getTaskId()).isEmpty()) {
-            // Task o którym nie wiedzieliśmy (podłączyliśmy się po jego rozpoczęciu).
+            logger.info("TaskController.updateBatch - we didnt know about this task. Start getting more info.");
+            // Task o którym nie wiedzieliśmy (podłączyliśmy się po jego rozpoczęciu lub inne braki).
             return Optional.of(TaskUpdateMessageRequestDto.create(batchUpdateMessage.getTaskId()));
         }
 
         return Optional.empty();
     }
 
+    @Override
+    public MemoryDumpDto getMemoryDumpMessage() {
+        taskRepositoryPort.findByStatus(TaskStatus.DONE).forEach(this::processDoneTask);
 
-    //TODO (14.01.2025): Zrobić, że wysyła requesta do tego, który wysłał mu info o batchu z zadania, którego nie ma.
-    // Podłączanie się do pracy.
-// Nie musimy aktulaizować taska, bo on przyjdzie jako TaskUpdate. Ale dla pewności i tak zapiszemy go ręcznie i przeprocesujemy.
-    /**
-     *  Przetwarza wiadomości z innych systeów pracujących przy tym samym zadaniu.
-     *  Jeśli dostał update Batcha z zadania którego nie ma, to wysła requesta po taska do tego od którego otrzymał.
-     *  Aktualizuje swoją bazę wiedzy, Jeśli pracuje nad danym taskiem to:
-     *  - Jeśli dostał aktualizację z tego samego batcha informującą, że jest zrobiony, to przerywa tego batcha i zaczyna innego.
-     *  - Jeśli dostał info, że znaleziono rozwiązanie dla danego zadania, to przerywa i procesuje
-     * @param batchUpdateMessage
-     */
-
-
-
-// Update wszystkich tasków, handler sobie poradzi
-// Update batchy, których taski jeszcze nie są zrobione (czyli aktualnie są przetwarzane).
-// W teorii wystarczyłoby wysłać wszystkie, bo już mamy ograne, że usuwamy ze zrobionych tasków.
-
-////    To ma być na zwrotce do noda ktory się podłączył.
-//    public MemoryDumpMessage getMemoryDump() {
-//        List<TaskUpdateMessage> tasks = taskRepositoryPort.findAll().stream().map(task -> {
-//            logger.info("Task ID: " + task.getTaskId());
-//            return TaskMapper.toTaskFromNetworkMessage(task);
-//        }).toList();
-//        List<Batch> batches = batchRepository.findAll();
-//
-//        List<TaskUpdateMessage> doneTasks = tasks.stream().filter(t -> t.getTaskStatus().equals(TaskStatus.DONE)).toList();
-//
-//        List<BatchUpdateDto> batchesUpdateDtoList = batchRepository.findAll().stream()
-//                .filter(b -> !b.getStatus().equals(BatchStatus.FOUND))
-//                .map(b -> BatchMapper.toBatchUpdateDto(b, null)).collect(toList());
-//
-//        List<BatchUpdateDto> doneBatches = batches.stream().filter(b -> b.getStatus().equals(BatchStatus.FOUND)).map(b -> {
-//                TaskUpdateMessage thisTask = doneTasks.stream().filter(dt -> dt.getTaskId().equals(b.getTaskId())).findFirst().orElseThrow();
-//                return BatchMapper.toBatchUpdateDto(b, thisTask.getResult());
-//            }).toList();
-//
-//        batchesUpdateDtoList.addAll(doneBatches);
-//
-//        return new MemoryDumpMessage("MemoryDumpMessage", tasks, batchesUpdateDtoList);
-//    }
-
-    private Task prepareAndStartNewTaskFromNetwork(TaskUpdateMessageDto newTaskRequest) {
-        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
-        Task task = taskFactory.createTaskFromNetwork(newTaskRequest, strategy);
-        return prepareAndStartNewTask(task);
+        List<TaskUpdateMessageDto> tasks = taskRepositoryPort.findAll().stream().map(TaskMapper::toTaskUpdateMessageDto).toList();
+        List<BatchUpdateDto> batches = batchRepository.findAll().stream().map(BatchMapper::toBatchUpdateDto).toList();
+        MemoryDumpDto memoryDumpDto = new MemoryDumpDto(tasks, batches);
+        logger.info("memoryDumpDto" + memoryDumpDto.toString());
+        return memoryDumpDto;
     }
 
-    private Task prepareAndStartNewTaskFromRequest(NewTaskDto newTaskRequest) {
-        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
-        Task task = taskFactory.createNewTaskFromRequest(newTaskRequest, strategy);
-        return prepareAndStartNewTask(task);
+    //TODO (14.01.2025): Dodać jakiegoś blocka, tak aby najpierw się robił memory dump ? bo przy updateach ciągle leci wysyłanie requesta :'(
+    @Override
+    public MemoryDumpDto getMemoryDumpMessage(UUID taskId) {
+        taskRepositoryPort.getById(taskId).ifPresent(x -> {
+            if(x.getTaskStatus().equals(TaskStatus.DONE)){
+                this.processDoneTask(x);
+            }
+        });
+
+        List<TaskUpdateMessageDto> tasks = taskRepositoryPort.getById(taskId).stream().map(TaskMapper::toTaskUpdateMessageDto).toList();
+        List<BatchUpdateDto> batches = batchRepository.findAllByTaskId(taskId).stream().map(BatchMapper::toBatchUpdateDto).toList();
+        return new MemoryDumpDto(tasks, batches);
     }
 
-    private Task prepareAndStartNewTask(Task task) {
-        task.addObserver(new TaskStatusLogger());
-        task.setTaskStatus(TaskStatus.IN_PROGRESS);
+    @Override
+    public void updateTasks(MemoryDumpDto memoryDumpDto) {
+        memoryDumpDto.getTaskUpdateMessageDtos().forEach(this::updateTask);
+        memoryDumpDto.getBatchUpdateDtos().forEach(this::updateBatch);
 
-        Task saved = taskRepositoryPort.save(task);
-        logger.info("Saved prepared task: " + saved.getTaskId());
-        this.initializeBatches(saved);
-        this.startTask(saved.getTaskId());
-
-        return saved;
+        logger.info("memoryDumpDto " + memoryDumpDto);
+        taskRepositoryPort.findAll().stream().filter(task -> !task.getTaskStatus().equals(TaskStatus.DONE)).findFirst().map(Task::getTaskId).ifPresent(uuid -> {
+            logger.info("uuid: " + uuid);
+            this.startTask(uuid);
+        });
     }
 
     private void startTask(UUID taskId) {
@@ -219,7 +212,10 @@ public class TaskControllerImpl implements TaskController {
 
     private void processDoneTask(Task task) {
         doneTaskProcessor.processDoneTask(task);
+
+        logger.info(String.valueOf(batchRepository.findAllByTaskId(task.getTaskId()).size()));
         batchRepository.deleteByTaskId(task.getTaskId());
+        logger.info(String.valueOf(batchRepository.findAllByTaskId(task.getTaskId()).size()));
     }
 
     private void stopTask(UUID taskId) {

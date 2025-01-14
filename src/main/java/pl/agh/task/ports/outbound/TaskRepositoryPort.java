@@ -1,6 +1,7 @@
 package pl.agh.task.ports.outbound;
 
 import pl.agh.task.model.Task;
+import pl.agh.task.model.enumerated.TaskStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +15,5 @@ public interface TaskRepositoryPort {
     Task save(Task task);
     Optional<Task> getById(UUID taskId);
     List<Task> findAll();
+    List<Task> findByStatus(TaskStatus status);
 }

@@ -2,9 +2,8 @@ package pl.agh.task;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.extern.java.Log;
 import pl.agh.logger.Logger;
-import pl.agh.middleware.mapper.BatchMapper;
+import pl.agh.task.mapper.BatchMapper;
 import pl.agh.task.model.Batch;
 import pl.agh.task.model.enumerated.BatchStatus;
 import pl.agh.task.model.dto.BatchUpdateDto;

@@ -2,7 +2,6 @@ package pl.agh.task.mapper;
 
 import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.model.Task;
-import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.dto.TaskUpdateMessageDto;
 
 public class TaskMapper {
@@ -27,13 +26,5 @@ public class TaskMapper {
                 taskUpdateMessageDto.getTaskStatus(),
                 taskUpdateMessageDto.getResult(),
                 strategy);
-    }
-
-    public static NewTaskDto toNewTaskDto(TaskUpdateMessageDto taskUpdateMessageDto) {
-        return new NewTaskDto(taskUpdateMessageDto.getPasswordHash(),
-                taskUpdateMessageDto.getAlphabet(),
-                taskUpdateMessageDto.getMaxLength(),
-                taskUpdateMessageDto.getMaxBatchSize(),
-                taskUpdateMessageDto.getTaskStatus());
     }
 }

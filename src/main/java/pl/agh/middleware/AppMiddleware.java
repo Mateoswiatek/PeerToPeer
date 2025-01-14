@@ -5,11 +5,12 @@ import pl.agh.logger.Logger;
 import pl.agh.middleware.mapper.BatchMapper;
 import pl.agh.middleware.mapper.TaskMapper;
 import pl.agh.middleware.model.BatchUpdateMessage;
+import pl.agh.middleware.model.MemoryDumpMessage;
 import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.middleware.p2p.model.task.NewTaskRequest;
 import pl.agh.middleware.p2p.P2PMessageResolverHashImpl;
 import pl.agh.middleware.p2p.model.task.NewTaskResponse;
-import pl.agh.middleware.p2p.model.task.TaskUpdateMessageRequestMessage;
+import pl.agh.middleware.p2p.model.task.TaskDumpMessageRequestMessage;
 import pl.agh.middleware.task.DoneTaskProcessor;
 import pl.agh.middleware.task.DoneTaskProcessorToFileImpl;
 import pl.agh.p2pnetwork.NetworkManagerImpl;
@@ -65,12 +66,12 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
 
     @Override
     public BaseMessage additionalActionOnNodeJoinToNetwork(JoinToNetworkRequest joinToNetworkRequest) {
-        return P2PExtension.super.additionalActionOnNodeJoinToNetwork(joinToNetworkRequest);
-        //TODO (14.01.2025): Dorobić tutaj tworzenie dumpoa z bazy danych o naszych taskach którego wyślemy do tego noda.
-
-//        Taski i batche
-        // In my implementation
-        //        objectMapper.writeValueAsString(taskController.getMemoryDump());
+        try{
+            networkManager.sendMessageToNode(joinToNetworkRequest.getNode(), TaskMapper.toMemoryDumpMessage(taskController.getMemoryDumpMessage()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -79,7 +80,8 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
             case NewTaskRequest newTaskRequest -> handleNewTaskRequest(newTaskRequest);
             case TaskUpdateMessage taskUpdateMessage -> handleTaskUpdateMessage(taskUpdateMessage);
             case BatchUpdateMessage batchUpdateMessage -> handleBatchUpdateMessage(batchUpdateMessage);
-            case TaskUpdateMessageRequestMessage taskUpdateMessageRequestMessage -> handleTaskUpdateMessageRequestMessage(taskUpdateMessageRequestMessage);
+            case TaskDumpMessageRequestMessage taskDumpMessageRequestMessage -> handleTaskDumpMessageRequestMessage(taskDumpMessageRequestMessage);
+            case MemoryDumpMessage memoryDumpMessage -> handleMemoryDumpMessage(memoryDumpMessage);
             default -> throw new IllegalStateException("Unexpected value: " + baseMessage);
         };
     }
@@ -107,8 +109,18 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
         return null;
     }
 
-    private BaseMessage handleTaskUpdateMessageRequestMessage(TaskUpdateMessageRequestMessage taskUpdateMessageRequestMessage) {
-        logger.info("będziemy wysyłać update bezpośrednio do noda: " + taskUpdateMessageRequestMessage.getNode().toString());
+    private BaseMessage handleTaskDumpMessageRequestMessage(TaskDumpMessageRequestMessage taskDumpMessageRequestMessage) {
+        try{
+            logger.info("handle task update message request message");
+            networkManager.sendMessageToNode(taskDumpMessageRequestMessage.getNode(), TaskMapper.toMemoryDumpMessage(taskController.getMemoryDumpMessage(taskDumpMessageRequestMessage.getTaskId())));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private BaseMessage handleMemoryDumpMessage(MemoryDumpMessage memoryDumpMessage) {
+        taskController.updateTasks(TaskMapper.toMemoryDumpDto(memoryDumpMessage));
         return null;
     }
 
@@ -122,7 +134,6 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
         logger.info("sendBatchUpdateMessage - invoked");
         networkManager.sendMessageToNetwork(BatchMapper.toTaskUpdateMessage(message));
     }
-
 
 }
 

@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import pl.agh.logger.Logger;
 import pl.agh.task.model.Task;
+import pl.agh.task.model.enumerated.TaskStatus;
 import pl.agh.task.ports.outbound.TaskRepositoryPort;
 
 import java.util.List;
@@ -47,5 +48,10 @@ public class InMemoryTaskRepositoryAdapter implements TaskRepositoryPort {
     @Override
     public List<Task> findAll() {
         return tasks.values().stream().toList();
+    }
+
+    @Override
+    public List<Task> findByStatus(TaskStatus status) {
+        return tasks.values().stream().filter(task -> status.equals(task.getTaskStatus())).toList();
     }
 }

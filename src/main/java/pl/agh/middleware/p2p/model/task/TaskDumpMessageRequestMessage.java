@@ -10,12 +10,12 @@ import java.util.UUID;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class TaskUpdateMessageRequestMessage extends BaseMessage {
+public class TaskDumpMessageRequestMessage extends BaseMessage {
     private final UUID taskId;
 
     @JsonCreator
-    public TaskUpdateMessageRequestMessage(@JsonProperty("taskId") UUID taskId) {
-        super(TaskUpdateMessageRequestMessage.class.getSimpleName());
+    public TaskDumpMessageRequestMessage(@JsonProperty("taskId") UUID taskId) {
+        super(TaskDumpMessageRequestMessage.class.getSimpleName());
         this.taskId = taskId;
     }
 
