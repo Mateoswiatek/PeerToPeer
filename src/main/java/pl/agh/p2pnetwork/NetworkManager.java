@@ -2,13 +2,13 @@ package pl.agh.p2pnetwork;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import pl.agh.logger.Logger;
-import pl.agh.p2pnetwork.core.model.dto.message.Ping;
-import pl.agh.p2pnetwork.core.model.dto.message.UpdateNetworkMessage;
-import pl.agh.p2pnetwork.core.ports.outbound.P2PExtension;
-import pl.agh.p2pnetwork.core.ports.outbound.P2PMessageResolver;
-import pl.agh.p2pnetwork.core.model.Node;
-import pl.agh.p2pnetwork.core.model.dto.BaseMessage;
-import pl.agh.p2pnetwork.core.model.dto.request.JoinToNetworkRequest;
+import pl.agh.p2pnetwork.model.Node;
+import pl.agh.p2pnetwork.model.dto.BaseMessage;
+import pl.agh.p2pnetwork.model.dto.base.JoinToNetworkRequest;
+import pl.agh.p2pnetwork.model.dto.base.Ping;
+import pl.agh.p2pnetwork.model.dto.base.UpdateNetworkMessage;
+import pl.agh.p2pnetwork.ports.outbound.P2PExtension;
+import pl.agh.p2pnetwork.ports.outbound.P2PMessageSerializer;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -31,14 +31,13 @@ public class NetworkManager {
     private static final Logger logger = Logger.getInstance();
 
     private static class P2PTCPSender {
-        private final P2PMessageResolver messageResolver;
+        private final P2PMessageSerializer messageResolver;
 
-        private P2PTCPSender(P2PMessageResolver messageResolver) {
+        private P2PTCPSender(P2PMessageSerializer messageResolver) {
             this.messageResolver = messageResolver;
         }
 
         /**
-         *
          * @param node
          * @param baseMessage
          * @throws IOException when something went wrong.
@@ -75,14 +74,14 @@ public class NetworkManager {
     }
 
     private static class P2PTCPListener {
-        private final P2PMessageResolver messageResolver;
+        private final P2PMessageSerializer messageResolver;
         private final UnaryOperator<BaseMessage> messageHandler;
 
         private final Logger logger = Logger.getInstance();
         private final int port;
         private boolean running;
 
-        private P2PTCPListener(P2PMessageResolver messageResolver, UnaryOperator<BaseMessage> messageHandler, int port) {
+        private P2PTCPListener(P2PMessageSerializer messageResolver, UnaryOperator<BaseMessage> messageHandler, int port) {
             this.messageResolver = messageResolver;
             this.messageHandler = messageHandler;
             this.port = port;
@@ -92,6 +91,7 @@ public class NetworkManager {
             Thread listenerThread = new Thread(this::startInThread);
             listenerThread.start();
         }
+
         public void stop() {
             running = false;
             logger.info("Serwer został zatrzymany.");
@@ -125,7 +125,7 @@ public class NetworkManager {
                 while ((message = in.readLine()) != null) {
                     BaseMessage baseMessage = messageResolver.deserializeMessage(message);
                     BaseMessage response = messageHandler.apply(baseMessage);
-                    if(response != null) {
+                    if (response != null) {
                         out.println(messageResolver.serializeMessage(response));
                     }
                 }
@@ -141,7 +141,7 @@ public class NetworkManager {
         }
     }
 
-    public NetworkManager(Node myself, P2PMessageResolver messageResolver, P2PExtension p2pExtension) {
+    public NetworkManager(Node myself, P2PMessageSerializer messageResolver, P2PExtension p2pExtension) {
         this.myself = myself;
         this.p2pExtension = p2pExtension;
 
@@ -166,15 +166,15 @@ public class NetworkManager {
 
     public void startNetwork(String ip, int port) {
         this.startNetwork();
-        try{
+        try {
             p2pTCPSender.sendMessageToNode(new Node(UUID.randomUUID(), ip, port), new JoinToNetworkRequest(myself));
-        } catch (Exception e){
-            logger.error("NetworkManager.startNetwork error during connect to network. " + ip + ":" + port + " Error message: "  + e.getMessage());
+        } catch (Exception e) {
+            logger.error("NetworkManager.startNetwork error during connect to network. " + ip + ":" + port + " Error message: " + e.getMessage());
         }
     }
 
     private BaseMessage handleMessageResolver(BaseMessage baseMessage) {
-        return switch(baseMessage) {
+        return switch (baseMessage) {
             case JoinToNetworkRequest joinRequest -> handleAddNewNodeToNetwork(joinRequest);
             case UpdateNetworkMessage updateNetworkMessage -> handleUpdateNetworkMessage(updateNetworkMessage);
 
@@ -186,7 +186,7 @@ public class NetworkManager {
      * Also before start task we should call this?
      */
     private void updateNetworkPing() {
-        Set<Node> disconnectedNodes =  p2pTCPSender.sendMessageToNodes(nodesInNetwork, Ping.ping());
+        Set<Node> disconnectedNodes = p2pTCPSender.sendMessageToNodes(nodesInNetwork, Ping.ping());
         nodesInNetwork.removeAll(disconnectedNodes);
     }
 
@@ -248,7 +248,6 @@ public class NetworkManager {
 //        logger.info("disconnectedNodes: " + disconnectedNodes + " duplicates: " + duplicates);
 //        nodes.removeAll(disconnectedNodes);
 //    }
-
 
 
 //    public void updateNetwork(UpdateNetworkMessage updateNetworkMessage) {

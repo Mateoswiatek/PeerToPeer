@@ -1,15 +1,15 @@
-package pl.agh.p2pnetwork.core.ports.outbound;
+package pl.agh.p2pnetwork.ports.outbound;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import pl.agh.logger.Logger;
-import pl.agh.p2pnetwork.core.model.dto.BaseMessage;
-import pl.agh.p2pnetwork.core.model.dto.message.Ping;
-import pl.agh.p2pnetwork.core.model.dto.message.UpdateNetworkMessage;
-import pl.agh.p2pnetwork.core.model.dto.request.JoinToNetworkRequest;
+import pl.agh.p2pnetwork.model.dto.BaseMessage;
+import pl.agh.p2pnetwork.model.dto.base.JoinToNetworkRequest;
+import pl.agh.p2pnetwork.model.dto.base.Ping;
+import pl.agh.p2pnetwork.model.dto.base.UpdateNetworkMessage;
 
-public abstract class P2PMessageResolver {
+public abstract class P2PMessageSerializer {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Logger logger = Logger.getInstance();
 
@@ -34,6 +34,7 @@ public abstract class P2PMessageResolver {
     }
 
     protected abstract BaseMessage deserializeMessageOverP2P(String jsonMessage);
+
     protected String serializeMessageOverP2P(BaseMessage baseMessage) {
         String requestJson = "";
         try {

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import pl.agh.p2pnetwork.core.model.dto.BaseMessage;
+import pl.agh.p2pnetwork.model.dto.BaseMessage;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.enumerated.TaskStatus;
 

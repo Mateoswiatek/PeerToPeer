@@ -1,4 +1,4 @@
-package pl.agh.p2pnetwork.core.model;
+package pl.agh.p2pnetwork.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
