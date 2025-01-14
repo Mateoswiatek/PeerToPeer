@@ -31,6 +31,7 @@ public class TaskControllerImpl implements TaskController {
     private final DoneTaskProcessor doneTaskProcessor;
     private final Logger logger = Logger.getInstance();
 
+    private boolean w8ForMemoryDump;
     private final Random random = new Random();
     private final Map<UUID, TaskThread> taskThreads = new HashMap<>();
 
@@ -42,6 +43,7 @@ public class TaskControllerImpl implements TaskController {
     @Override
     public UUID createNewTask(NewTaskDto newTaskRequest) {
         Task newTask = prepareAndStartNewTaskFromRequest(newTaskRequest);
+        this.startTask(newTask.getTaskId());
 
         taskMessagePort.sendTaskUpdateMessage(TaskMapper.toTaskUpdateMessageDto(newTask));
         return newTask.getTaskId();
@@ -92,31 +94,30 @@ public class TaskControllerImpl implements TaskController {
             logger.info("TaskController.updateTask - received new Task from network, start processing without send message");
             // Nie mamy go w bazie, nie przyszedł jako zrobiony, nie liczymy go == nowy task
             // Nie wysyłamy powiadomienia, bo dostaliśmy go z sieci.
-            this.prepareAndStartNewTaskFromNetwork(taskUpdateMessageDto);
+            Task task = this.prepareAndStartNewTaskFromNetwork(taskUpdateMessageDto);
+            this.startTask(task.getTaskId());
         }
     }
 
     private Task prepareAndStartNewTaskFromNetwork(TaskUpdateMessageDto newTaskRequest) {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
         Task task = taskFactory.createTaskFromNetwork(newTaskRequest, strategy);
-        return prepareAndStartNewTask(task);
+        return prepareNewTask(task);
     }
 
     private Task prepareAndStartNewTaskFromRequest(NewTaskDto newTaskRequest) {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
         Task task = taskFactory.createNewTaskFromRequest(newTaskRequest, strategy);
-        return prepareAndStartNewTask(task);
+        return prepareNewTask(task);
     }
 
-    private Task prepareAndStartNewTask(Task task) {
+    private Task prepareNewTask(Task task) {
         task.addObserver(new TaskStatusLogger());
         task.setTaskStatus(TaskStatus.IN_PROGRESS);
 
         Task saved = taskRepositoryPort.save(task);
         logger.info("Saved prepared task: " + saved.getTaskId());
         this.initializeBatches(saved);
-        this.startTask(saved.getTaskId());
-
         return saved;
     }
 
@@ -145,8 +146,9 @@ public class TaskControllerImpl implements TaskController {
                 logger.info("TaskController.updateBatch - other update from the same task");
                 batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
             }
-        } else if(taskRepositoryPort.getById(batchUpdateMessage.getTaskId()).isEmpty()) {
-            logger.info("TaskController.updateBatch - we didnt know about this task. Start getting more info.");
+        } else if(taskRepositoryPort.getById(batchUpdateMessage.getTaskId()).isEmpty() && !w8ForMemoryDump) {
+            w8ForMemoryDump = true;
+            logger.info("TaskController.updateBatch - we didnt know about this task. Start getting more info. taskId: " + batchUpdateMessage.getTaskId());
             // Task o którym nie wiedzieliśmy (podłączyliśmy się po jego rozpoczęciu lub inne braki).
             return Optional.of(TaskUpdateMessageRequestDto.create(batchUpdateMessage.getTaskId()));
         }
@@ -159,9 +161,9 @@ public class TaskControllerImpl implements TaskController {
         taskRepositoryPort.findByStatus(TaskStatus.DONE).forEach(this::processDoneTask);
 
         List<TaskUpdateMessageDto> tasks = taskRepositoryPort.findAll().stream().map(TaskMapper::toTaskUpdateMessageDto).toList();
-        List<BatchUpdateDto> batches = batchRepository.findAll().stream().map(BatchMapper::toBatchUpdateDto).toList();
+        List<BatchUpdateDto> batches = batchRepository.findAll().stream().filter(b -> !b.getStatus().equals(BatchStatus.DONE)).map(BatchMapper::toBatchUpdateDto).toList();
         MemoryDumpDto memoryDumpDto = new MemoryDumpDto(tasks, batches);
-        logger.info("memoryDumpDto" + memoryDumpDto.toString());
+        logger.info("memoryDumpDto" + memoryDumpDto);
         return memoryDumpDto;
     }
 
@@ -175,20 +177,25 @@ public class TaskControllerImpl implements TaskController {
         });
 
         List<TaskUpdateMessageDto> tasks = taskRepositoryPort.getById(taskId).stream().map(TaskMapper::toTaskUpdateMessageDto).toList();
-        List<BatchUpdateDto> batches = batchRepository.findAllByTaskId(taskId).stream().map(BatchMapper::toBatchUpdateDto).toList();
+        List<BatchUpdateDto> batches = batchRepository.findAllByTaskId(taskId).stream().filter(b -> !b.getStatus().equals(BatchStatus.DONE)).map(BatchMapper::toBatchUpdateDto).toList();
         return new MemoryDumpDto(tasks, batches);
     }
 
     @Override
     public void updateTasks(MemoryDumpDto memoryDumpDto) {
+        logger.info("updateTasks - invoked");
         memoryDumpDto.getTaskUpdateMessageDtos().forEach(this::updateTask);
-        memoryDumpDto.getBatchUpdateDtos().forEach(this::updateBatch);
 
-        logger.info("memoryDumpDto " + memoryDumpDto);
+        // Dostajemy batche, z aktualnie robionych tasków. Możemy przefiltrować po nie zrobionych i tylko je zapisać?
+        batchRepository.updateStatusFromDump(memoryDumpDto.getBatchUpdateDtos());
+
+        logger.info("updateTasks - done: " + memoryDumpDto);
+
         taskRepositoryPort.findAll().stream().filter(task -> !task.getTaskStatus().equals(TaskStatus.DONE)).findFirst().map(Task::getTaskId).ifPresent(uuid -> {
             logger.info("uuid: " + uuid);
             this.startTask(uuid);
         });
+        w8ForMemoryDump = false;
     }
 
     private void startTask(UUID taskId) {
@@ -232,7 +239,7 @@ public class TaskControllerImpl implements TaskController {
             task.complete(batchUpdateMessage.getResult());
 
             taskRepositoryPort.save(task);
-            doneTaskProcessor.processDoneTask(task);
+            this.processDoneTask(task);
 
             taskMessagePort.sendTaskUpdateMessage(TaskMapper.toTaskUpdateMessageDto(task));
             logger.info("Stop task: " + batchUpdateMessage.getTaskId());

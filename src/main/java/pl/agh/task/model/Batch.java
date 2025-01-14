@@ -16,17 +16,11 @@ public class Batch {
     private String max;
     private BatchStatus status;
 
-//    @JsonCreator
     public Batch(
-//            @JsonProperty("taskId")
             UUID taskId,
-//            @JsonProperty("batchId")
             Long batchId,
-//            @JsonProperty("min")
             String min,
-//            @JsonProperty("max")
             String max,
-//            @JsonProperty("status")
             BatchStatus status) {
         this.taskId = taskId;
         this.batchId = batchId;

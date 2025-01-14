@@ -60,7 +60,8 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
         InMemoryTaskRepositoryAdapter.getInstance(),
         this,
         new DefaultTaskFactory(),
-        doneTaskProcessorToFile);
+        doneTaskProcessorToFile,
+        false);
     }
 
 

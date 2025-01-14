@@ -1,6 +1,7 @@
 package pl.agh.task.ports.outbound;
 
 import pl.agh.task.model.Batch;
+import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.model.enumerated.BatchStatus;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public interface BatchRepositoryPort {
     List<Batch> findAllByTaskId(UUID taskId);
     void updateStatus(UUID taskId, Long id, BatchStatus status);
     void deleteByTaskId(UUID taskId);
+    void updateStatusFromDump(List<BatchUpdateDto> batchUpdateDtos);
 
 //    void update(Batch batch);
 //    void deleteById(int id);
