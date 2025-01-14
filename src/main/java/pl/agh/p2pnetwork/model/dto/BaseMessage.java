@@ -1,13 +1,12 @@
 package pl.agh.p2pnetwork.model.dto;
 
+import lombok.Getter;
+
+@Getter
 public abstract class BaseMessage {
-    private String type;
+    private final String type;
 
-    public BaseMessage(String type) {
+    protected BaseMessage(String type) {
         this.type = type;
-    }
-
-    public String getType() {
-        return type;
     }
 }

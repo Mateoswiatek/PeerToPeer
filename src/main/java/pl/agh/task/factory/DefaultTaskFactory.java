@@ -1,13 +1,11 @@
 package pl.agh.task.factory;
 
 import pl.agh.logger.Logger;
-import pl.agh.middleware.model.TaskFromNetworkMessage;
+import pl.agh.middleware.model.TaskUpdateMessage;
 import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.enumerated.TaskStatus;
-
-import java.util.UUID;
 
 public class DefaultTaskFactory implements TaskFactory {
     private final Logger logger = Logger.getInstance();
@@ -32,7 +30,7 @@ public class DefaultTaskFactory implements TaskFactory {
     }
 
     @Override
-    public Task createTask(TaskFromNetworkMessage newTaskRequestFromNetwork, TaskExecutionStrategy strategy) {
+    public Task createTask(TaskUpdateMessage newTaskRequestFromNetwork, TaskExecutionStrategy strategy) {
         logger.info("Task Factory - create task from network message");
         // Pobierz status z NewTaskDto lub ustaw domyślny
         TaskStatus taskStatus = newTaskRequestFromNetwork.getTaskStatus() != null

@@ -1,4 +1,4 @@
-package pl.agh.p2pnetwork.model.dto.request;
+package pl.agh.p2pnetwork.model.dto.base;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

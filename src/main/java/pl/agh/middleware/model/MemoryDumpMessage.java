@@ -11,13 +11,13 @@ import java.util.List;
 @Getter
 @Setter
 public class MemoryDumpMessage extends BaseMessage {
-    List<TaskFromNetworkMessage> tasksFromNetworkMessages;
+    List<TaskUpdateMessage> tasksFromNetworkMessages;
     List<BatchUpdateDto> batchUpdateDtoList;
 
     @JsonCreator
     public MemoryDumpMessage(
             @JsonProperty("type") String type,
-            @JsonProperty("tasksFromNetworkMessages") List<TaskFromNetworkMessage> tasksFromNetworkMessages,
+            @JsonProperty("tasksFromNetworkMessages") List<TaskUpdateMessage> tasksFromNetworkMessages,
             @JsonProperty("batchUpdateDtoList") List<BatchUpdateDto> batchUpdateDtoList) {
         super(type);
         this.tasksFromNetworkMessages = tasksFromNetworkMessages;

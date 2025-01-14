@@ -1,8 +1,10 @@
 package pl.agh.task.model;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import pl.agh.task.impl.TaskExecutionStrategy;
 import pl.agh.task.model.enumerated.TaskStatus;
 
@@ -13,6 +15,8 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 public class Task {
+    // UUID, bo tworzenie jest rozproszone
+    @Setter
     private UUID taskId;
     private String passwordHash;
     private String alphabet;
@@ -22,6 +26,7 @@ public class Task {
     private String result = "";
     private TaskExecutionStrategy strategy;
 
+    @JsonIgnore
     private final List<TaskObserver> observers = new ArrayList<>(); // Lista obserwatorów
 
     public void complete(String result) {
