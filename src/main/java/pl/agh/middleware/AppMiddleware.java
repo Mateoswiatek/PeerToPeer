@@ -28,6 +28,7 @@ import pl.agh.task.model.dto.TaskUpdateMessageDto;
 import pl.agh.task.ports.inbound.TaskController;
 import pl.agh.task.ports.outbound.TaskMessageSenderPort;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @Getter
@@ -94,9 +95,16 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
     }
 
     private BaseMessage handleBatchUpdateMessage(BatchUpdateMessage batchUpdateMessage) {
-        return taskController.updateBatch(BatchMapper.toBatchUpdateDto(batchUpdateMessage))
-                .map(taskUpdateMessageRequestDto ->
-                        TaskMapper.toTaskUpdateMessageRequestMessage(taskUpdateMessageRequestDto, networkManager.getMyself())).orElse(null);
+        taskController.updateBatch(BatchMapper.toBatchUpdateDto(batchUpdateMessage))
+                .ifPresent(taskUpdateMessageRequestDto ->
+                {
+                    try {
+                        networkManager.sendMessageToNode(batchUpdateMessage.getNode(), TaskMapper.toTaskUpdateMessageRequestMessage(taskUpdateMessageRequestDto));
+                    } catch (IOException e) {
+                        logger.info("Faild to send batch update request message to node " + batchUpdateMessage.getNode());
+                    }
+                });
+        return null;
     }
 
     private BaseMessage handleTaskUpdateMessageRequestMessage(TaskUpdateMessageRequestMessage taskUpdateMessageRequestMessage) {
@@ -111,6 +119,7 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
 
     @Override
     public void sendBatchUpdateMessage(BatchUpdateDto message) {
+        logger.info("sendBatchUpdateMessage - invoked");
         networkManager.sendMessageToNetwork(BatchMapper.toTaskUpdateMessage(message));
     }
 

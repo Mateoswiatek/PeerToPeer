@@ -43,7 +43,7 @@ public class TaskControllerImpl implements TaskController {
      */
     @Override
     public UUID createNewTask(NewTaskDto newTaskRequest) {
-        Task newTask = prepareAndStartNewTask(newTaskRequest);
+        Task newTask = prepareAndStartNewTaskFromRequest(newTaskRequest);
 
         taskMessagePort.sendTaskUpdateMessage(TaskMapper.toTaskUpdateMessageDto(newTask));
         return newTask.getTaskId();
@@ -55,6 +55,8 @@ public class TaskControllerImpl implements TaskController {
      */
     @Override
     public void updateTask(TaskUpdateMessageDto taskUpdateMessageDto) {
+        logger.info("updateTask: " + taskUpdateMessageDto.getTaskId());
+
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
         UUID taskId = taskUpdateMessageDto.getTaskId();
         Optional<Task> optTask = taskRepositoryPort.getById(taskId);
@@ -92,18 +94,37 @@ public class TaskControllerImpl implements TaskController {
             logger.info("TaskController.updateTask - received new Task from network, start processing without send message");
             // Nie mamy go w bazie, nie przyszedł jako zrobiony, nie liczymy go == nowy task
             // Nie wysyłamy powiadomienia, bo dostaliśmy go z sieci.
-            this.prepareAndStartNewTask(TaskMapper.toNewTaskDto(taskUpdateMessageDto));
+            this.prepareAndStartNewTaskFromNetwork(taskUpdateMessageDto);
         }
     }
 
     @Override
     public Optional<TaskUpdateMessageRequestDto> updateBatch(BatchUpdateDto batchUpdateMessage) {
-        logger.info("TaskController.updateBatch - received batch update message");
+        UUID taskId = batchUpdateMessage.getTaskId();
+        Long batchId = batchUpdateMessage.getBatchId();
+        boolean computeThisTask = taskThreads.containsKey(taskId);
 
-        //TODO (14.01.2025): Zrobić update, tak aby przeszło wszystko.
-
-        // Jeśli nie mamy info, to wysyłamy requesta
-        if(taskRepositoryPort.getById(batchUpdateMessage.getTaskId()).isEmpty()) {
+        if(computeThisTask) {
+            TaskThread taskThread = taskThreads.get(taskId);
+            // Task is completed
+            if (batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
+                taskRepositoryPort.getById(taskId).ifPresent(task -> {
+                    logger.info("TaskController.updateBatch - received FOUND batch update, stop the task");
+                    task.complete(batchUpdateMessage.getResult());
+                    taskRepositoryPort.save(task);
+                    this.processDoneTask(task);
+                });
+            } else if(batchUpdateMessage.getBatchStatus().equals(BatchStatus.DONE) && taskId.equals(taskThread.getTaskId()) && batchId.equals(taskThread.getCurrentBatch().getBatchId())) {
+                // Update przyszedł z tym batchem, który teraz robiliśmy.
+                logger.info("TaskController.updateBatch - received DONE the same batch as we, start new batch.");
+                taskThread.stopTask();
+                this.startTask(taskId);
+            } else { // Zwykły update innego batcha. Ktoś zrobił.
+                logger.info("TaskController.updateBatch - other update from the same task");
+                batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
+            }
+        } else if(taskRepositoryPort.getById(batchUpdateMessage.getTaskId()).isEmpty()) {
+            // Task o którym nie wiedzieliśmy (podłączyliśmy się po jego rozpoczęciu).
             return Optional.of(TaskUpdateMessageRequestDto.create(batchUpdateMessage.getTaskId()));
         }
 
@@ -122,31 +143,7 @@ public class TaskControllerImpl implements TaskController {
      *  - Jeśli dostał info, że znaleziono rozwiązanie dla danego zadania, to przerywa i procesuje
      * @param batchUpdateMessage
      */
-    public void receiveBatchUpdateMessage(BatchUpdateDto batchUpdateMessage) {
-        logger.info("Receive batch update message");
-        batchRepository.updateStatus(batchUpdateMessage.getTaskId(), batchUpdateMessage.getBatchId(), batchUpdateMessage.getBatchStatus());
 
-        UUID taskId = batchUpdateMessage.getTaskId();
-        TaskThread taskThread = taskThreads.get(taskId);
-
-        if (taskThread != null) {
-            if (batchUpdateMessage.getBatchStatus().equals(BatchStatus.DONE)) {
-                taskRepositoryPort.getById(taskId).ifPresent(task -> {
-                    if (batchRepository.findAllByStatusAndTaskId(BatchStatus.NOT_DONE, taskId).isEmpty()) {
-                        task.complete(batchUpdateMessage.getResult());
-                        taskRepositoryPort.save(task);
-                    }
-                });
-            }
-            else if (batchUpdateMessage.getBatchStatus().equals(BatchStatus.FOUND)) {
-                taskRepositoryPort.getById(taskId).ifPresent(task -> {
-                    task.complete(batchUpdateMessage.getResult());
-                    taskRepositoryPort.save(task);
-                });
-                stopTask(taskThread);
-            }
-        }
-    }
 
 
 // Update wszystkich tasków, handler sobie poradzi
@@ -177,10 +174,19 @@ public class TaskControllerImpl implements TaskController {
 //        return new MemoryDumpMessage("MemoryDumpMessage", tasks, batchesUpdateDtoList);
 //    }
 
-    private Task prepareAndStartNewTask(NewTaskDto newTaskRequest) {
+    private Task prepareAndStartNewTaskFromNetwork(TaskUpdateMessageDto newTaskRequest) {
         TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
+        Task task = taskFactory.createTaskFromNetwork(newTaskRequest, strategy);
+        return prepareAndStartNewTask(task);
+    }
 
-        Task task = taskFactory.createTask(newTaskRequest, strategy);
+    private Task prepareAndStartNewTaskFromRequest(NewTaskDto newTaskRequest) {
+        TaskExecutionStrategy strategy = new SHA256TaskExecutionStrategy();
+        Task task = taskFactory.createNewTaskFromRequest(newTaskRequest, strategy);
+        return prepareAndStartNewTask(task);
+    }
+
+    private Task prepareAndStartNewTask(Task task) {
         task.addObserver(new TaskStatusLogger());
         task.setTaskStatus(TaskStatus.IN_PROGRESS);
 
@@ -218,10 +224,6 @@ public class TaskControllerImpl implements TaskController {
 
     private void stopTask(UUID taskId) {
         taskThreads.get(taskId).stopTask();
-    }
-
-    private void stopTask(TaskThread taskThread) {
-        taskThread.stopTask();
     }
 
     private void callbackBatchUpdate(BatchUpdateDto batchUpdateMessage) {

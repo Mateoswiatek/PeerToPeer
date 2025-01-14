@@ -3,7 +3,6 @@ package pl.agh.middleware.mapper;
 import pl.agh.middleware.p2p.model.task.NewTaskRequest;
 import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.middleware.p2p.model.task.TaskUpdateMessageRequestMessage;
-import pl.agh.p2pnetwork.model.Node;
 import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.dto.TaskUpdateMessageDto;
 import pl.agh.task.model.dto.TaskUpdateMessageRequestDto;
@@ -41,7 +40,7 @@ public class TaskMapper {
                 TaskStatus.CREATED);
     }
 
-    public static TaskUpdateMessageRequestMessage toTaskUpdateMessageRequestMessage(TaskUpdateMessageRequestDto taskUpdateMessageRequestDto, Node node) {
-        return new TaskUpdateMessageRequestMessage(taskUpdateMessageRequestDto.getTaskId(), node);
+    public static TaskUpdateMessageRequestMessage toTaskUpdateMessageRequestMessage(TaskUpdateMessageRequestDto taskUpdateMessageRequestDto) {
+        return new TaskUpdateMessageRequestMessage(taskUpdateMessageRequestDto.getTaskId());
     }
 }

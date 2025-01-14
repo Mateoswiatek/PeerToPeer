@@ -11,10 +11,8 @@ import pl.agh.p2pnetwork.ports.outbound.P2PExtension;
 import pl.agh.p2pnetwork.ports.outbound.P2PMessageSerializer;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -33,9 +31,11 @@ public class NetworkManagerImpl implements NetworkManager {
     private static class P2PTCPSender {
         private static final Logger logger = Logger.getInstance();
         private final P2PMessageSerializer messageResolver;
+        Node myself;
 
-        private P2PTCPSender(P2PMessageSerializer messageResolver) {
+        private P2PTCPSender(P2PMessageSerializer messageResolver, Node myself) {
             this.messageResolver = messageResolver;
+            this.myself = myself;
         }
 
         /**
@@ -44,17 +44,18 @@ public class NetworkManagerImpl implements NetworkManager {
          * @throws IOException when something went wrong.
          */
         public void sendMessageToNode(Node node, BaseMessage baseMessage) throws IOException {
+            baseMessage.setNode(myself);
             String messageJson = messageResolver.serializeMessage(baseMessage);
-            this.sendMessage(node.getIp(), node.getPort(), messageJson, true);
+            this.sendMessage(node.getIp(), node.getPort(), messageJson);
         }
 
         public Set<Node> sendMessageToNodes(Set<Node> nodes, BaseMessage baseMessage) {
+            baseMessage.setNode(myself);
             Set<Node> failedNodes = new HashSet<>();
             String messageJson = messageResolver.serializeMessage(baseMessage);
-
             nodes.forEach(node -> {
                 try {
-                    this.sendMessage(node.getIp(), node.getPort(), messageJson, false);
+                    this.sendMessage(node.getIp(), node.getPort(), messageJson);
                 } catch (Exception e) {
                     logger.error("sendMessageToNodes - can not connect to node. Remove node: " + node.getIp() + ":" + node.getPort() + " Error: " + e.getMessage());
                     failedNodes.add(node);
@@ -63,43 +64,13 @@ public class NetworkManagerImpl implements NetworkManager {
             return failedNodes;
         }
 
-        private void sendMessage(String ip, int port, String requestJson, boolean gerResponse) throws IOException {
-
-
-//            try (Socket socket = new Socket(ip, port);
-//                 OutputStream outputStream = socket.getOutputStream();
-//                 PrintWriter writer = new PrintWriter(outputStream, true)) {
-//                writer.println(requestJson);
-//            } catch (IOException e) {
-//                throw new IOException("Błąd podczas wysyłania wiadomości do " + ip + ":" + port, e);
-//            }
-
-
-            int timeoutMillis = gerResponse ? 2000 : 0;
-            try (Socket socket = new Socket()) {
-                // Ustaw timeout na połączenie i odpowiedź
-                socket.connect(new InetSocketAddress(ip, port), timeoutMillis);
-                socket.setSoTimeout(timeoutMillis);
-                try (OutputStream outputStream = socket.getOutputStream();
-                     PrintWriter writer = new PrintWriter(outputStream, true);
-                     InputStream inputStream = socket.getInputStream();
-                     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-
-                    // Wyślij wiadomość
-                    writer.println(requestJson);
-
-                    // Czekaj na odpowiedź z timeoutem
-                    String response = reader.readLine();
-                    if (response == null || response.isEmpty()) {
-                        throw new IOException("No response received from " + ip + ":" + port + " within timeout");
-                    }
-
-                    logger.info("Response received from " + ip + ":" + port + ": " + response);
-                }
-            } catch (SocketTimeoutException e) {
-                logger.info("Timeout while communicating with " + ip + ":" + port);
+        private void sendMessage(String ip, int port, String requestJson) throws IOException {
+            try (Socket socket = new Socket(ip, port);
+                 OutputStream outputStream = socket.getOutputStream();
+                 PrintWriter writer = new PrintWriter(outputStream, true)) {
+                writer.println(requestJson);
             } catch (IOException e) {
-                throw new IOException("Error while sending message to " + ip + ":" + port, e);
+                throw new IOException("Błąd podczas wysyłania wiadomości do " + ip + ":" + port, e);
             }
         }
     }
@@ -178,7 +149,7 @@ public class NetworkManagerImpl implements NetworkManager {
         this.myself = myself;
         this.p2pExtension = p2pExtension;
 
-        this.p2pTCPSender = new P2PTCPSender(messageResolver);
+        this.p2pTCPSender = new P2PTCPSender(messageResolver, myself);
         this.p2pTCPListener = new P2PTCPListener(messageResolver, this::handleMessageResolver, myself.getPort());
 
         new Thread(() -> {
@@ -216,14 +187,14 @@ public class NetworkManagerImpl implements NetworkManager {
     }
 
     @Override
-    public Node getMyself() {
-        return this.myself;
-    }
-
-    @Override
     public void sendMessageToNetwork(BaseMessage message) {
         updateNetwork();
         p2pTCPSender.sendMessageToNodes(nodesInNetwork, message);
+    }
+
+    @Override
+    public void sendMessageToNode(Node node, BaseMessage message) throws IOException {
+        p2pTCPSender.sendMessageToNode(node, message);
     }
 
     private BaseMessage handleMessageResolver(BaseMessage baseMessage) {
