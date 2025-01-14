@@ -25,11 +25,9 @@ import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
 import pl.agh.task.impl.InMemoryTaskRepositoryAdapter;
 import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.model.dto.TaskUpdateMessageDto;
-import pl.agh.task.model.dto.TaskUpdateMessageRequestDto;
 import pl.agh.task.ports.inbound.TaskController;
 import pl.agh.task.ports.outbound.TaskMessageSenderPort;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -67,7 +65,7 @@ public class AppMiddleware implements P2PExtension, TaskMessageSenderPort {
     @Override
     public BaseMessage additionalActionOnNodeJoinToNetwork(JoinToNetworkRequest joinToNetworkRequest) {
         return P2PExtension.super.additionalActionOnNodeJoinToNetwork(joinToNetworkRequest);
-        //TODO (14.01.2025): Dorobić tutaj tworzenie dumpoa z bazy danych o naszych taskach
+        //TODO (14.01.2025): Dorobić tutaj tworzenie dumpoa z bazy danych o naszych taskach którego wyślemy do tego noda.
 
 //        Taski i batche
         // In my implementation

@@ -11,8 +11,10 @@ import pl.agh.p2pnetwork.ports.outbound.P2PExtension;
 import pl.agh.p2pnetwork.ports.outbound.P2PMessageSerializer;
 
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -43,7 +45,7 @@ public class NetworkManagerImpl implements NetworkManager {
          */
         public void sendMessageToNode(Node node, BaseMessage baseMessage) throws IOException {
             String messageJson = messageResolver.serializeMessage(baseMessage);
-            this.sendMessage(node.getIp(), node.getPort(), messageJson);
+            this.sendMessage(node.getIp(), node.getPort(), messageJson, true);
         }
 
         public Set<Node> sendMessageToNodes(Set<Node> nodes, BaseMessage baseMessage) {
@@ -52,7 +54,7 @@ public class NetworkManagerImpl implements NetworkManager {
 
             nodes.forEach(node -> {
                 try {
-                    this.sendMessage(node.getIp(), node.getPort(), messageJson);
+                    this.sendMessage(node.getIp(), node.getPort(), messageJson, false);
                 } catch (Exception e) {
                     logger.error("sendMessageToNodes - can not connect to node. Remove node: " + node.getIp() + ":" + node.getPort() + " Error: " + e.getMessage());
                     failedNodes.add(node);
@@ -61,13 +63,43 @@ public class NetworkManagerImpl implements NetworkManager {
             return failedNodes;
         }
 
-        private void sendMessage(String ip, int port, String requestJson) throws IOException {
-            try (Socket socket = new Socket(ip, port);
-                 OutputStream outputStream = socket.getOutputStream();
-                 PrintWriter writer = new PrintWriter(outputStream, true)) {
-                writer.println(requestJson);
+        private void sendMessage(String ip, int port, String requestJson, boolean gerResponse) throws IOException {
+
+
+//            try (Socket socket = new Socket(ip, port);
+//                 OutputStream outputStream = socket.getOutputStream();
+//                 PrintWriter writer = new PrintWriter(outputStream, true)) {
+//                writer.println(requestJson);
+//            } catch (IOException e) {
+//                throw new IOException("Błąd podczas wysyłania wiadomości do " + ip + ":" + port, e);
+//            }
+
+
+            int timeoutMillis = gerResponse ? 2000 : 0;
+            try (Socket socket = new Socket()) {
+                // Ustaw timeout na połączenie i odpowiedź
+                socket.connect(new InetSocketAddress(ip, port), timeoutMillis);
+                socket.setSoTimeout(timeoutMillis);
+                try (OutputStream outputStream = socket.getOutputStream();
+                     PrintWriter writer = new PrintWriter(outputStream, true);
+                     InputStream inputStream = socket.getInputStream();
+                     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+
+                    // Wyślij wiadomość
+                    writer.println(requestJson);
+
+                    // Czekaj na odpowiedź z timeoutem
+                    String response = reader.readLine();
+                    if (response == null || response.isEmpty()) {
+                        throw new IOException("No response received from " + ip + ":" + port + " within timeout");
+                    }
+
+                    logger.info("Response received from " + ip + ":" + port + ": " + response);
+                }
+            } catch (SocketTimeoutException e) {
+                logger.info("Timeout while communicating with " + ip + ":" + port);
             } catch (IOException e) {
-                throw new IOException("Błąd podczas wysyłania wiadomości do " + ip + ":" + port, e);
+                throw new IOException("Error while sending message to " + ip + ":" + port, e);
             }
         }
     }
@@ -119,14 +151,15 @@ public class NetworkManagerImpl implements NetworkManager {
             String message = "";
             try (
                     BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    //TODO (14.01.2025): Coś z dwustronną komunikacją nie działa jak należy :'(
                     PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)
             ) {
                 while ((message = in.readLine()) != null) {
                     BaseMessage baseMessage = messageResolver.deserializeMessage(message);
                     BaseMessage response = messageHandler.apply(baseMessage);
                     if (response != null) {
-                        logger.info("wysyłamy wiadomość!!!");
-                        out.println(messageResolver.serializeMessage(response));
+                        logger.info("wysyłamy wiadomość w nowym watku!!!");
+                        new Thread(() -> out.println(messageResolver.serializeMessage(response))).start();
                     }
                 }
             } catch (IOException e) {
