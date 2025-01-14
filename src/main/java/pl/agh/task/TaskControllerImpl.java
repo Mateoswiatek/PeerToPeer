@@ -39,29 +39,29 @@ public class TaskControllerImpl implements TaskController {
     private final Random random = new Random();
     private final Map<UUID, TaskThread> taskThreads = new HashMap<>();
 
-//    To ma być na zwrotce do noda ktory się podłączył.
-    public MemoryDumpMessage getMemoryDump() {
-        List<TaskUpdateMessage> tasks = taskRepositoryPort.findAll().stream().map(task -> {
-            logger.info("Task ID: " + task.getTaskId());
-            return TaskMapper.toTaskFromNetworkMessage(task);
-        }).toList();
-        List<Batch> batches = batchRepository.findAll();
-
-        List<TaskUpdateMessage> doneTasks = tasks.stream().filter(t -> t.getTaskStatus().equals(TaskStatus.DONE)).toList();
-
-        List<BatchUpdateDto> batchesUpdateDtoList = batchRepository.findAll().stream()
-                .filter(b -> !b.getStatus().equals(BatchStatus.FOUND))
-                .map(b -> BatchMapper.toBatchUpdateDto(b, null)).collect(toList());
-
-        List<BatchUpdateDto> doneBatches = batches.stream().filter(b -> b.getStatus().equals(BatchStatus.FOUND)).map(b -> {
-                TaskUpdateMessage thisTask = doneTasks.stream().filter(dt -> dt.getTaskId().equals(b.getTaskId())).findFirst().orElseThrow();
-                return BatchMapper.toBatchUpdateDto(b, thisTask.getResult());
-            }).toList();
-
-        batchesUpdateDtoList.addAll(doneBatches);
-
-        return new MemoryDumpMessage("MemoryDumpMessage", tasks, batchesUpdateDtoList);
-    }
+////    To ma być na zwrotce do noda ktory się podłączył.
+//    public MemoryDumpMessage getMemoryDump() {
+//        List<TaskUpdateMessage> tasks = taskRepositoryPort.findAll().stream().map(task -> {
+//            logger.info("Task ID: " + task.getTaskId());
+//            return TaskMapper.toTaskFromNetworkMessage(task);
+//        }).toList();
+//        List<Batch> batches = batchRepository.findAll();
+//
+//        List<TaskUpdateMessage> doneTasks = tasks.stream().filter(t -> t.getTaskStatus().equals(TaskStatus.DONE)).toList();
+//
+//        List<BatchUpdateDto> batchesUpdateDtoList = batchRepository.findAll().stream()
+//                .filter(b -> !b.getStatus().equals(BatchStatus.FOUND))
+//                .map(b -> BatchMapper.toBatchUpdateDto(b, null)).collect(toList());
+//
+//        List<BatchUpdateDto> doneBatches = batches.stream().filter(b -> b.getStatus().equals(BatchStatus.FOUND)).map(b -> {
+//                TaskUpdateMessage thisTask = doneTasks.stream().filter(dt -> dt.getTaskId().equals(b.getTaskId())).findFirst().orElseThrow();
+//                return BatchMapper.toBatchUpdateDto(b, thisTask.getResult());
+//            }).toList();
+//
+//        batchesUpdateDtoList.addAll(doneBatches);
+//
+//        return new MemoryDumpMessage("MemoryDumpMessage", tasks, batchesUpdateDtoList);
+//    }
     /**
      *  Przetwarza wiadomości z innych systeów pracujących przy tym samym zadaniu.
      *  Aktualizuje swoją bazę wiedzy, Jeśli pracuje nad danym taskiem to:
@@ -228,7 +228,7 @@ public class TaskControllerImpl implements TaskController {
             taskRepositoryPort.save(task);
             doneTaskProcessor.processDoneTask(task);
 
-            taskMessagePort.sendTaskUpdateMessage(task);
+//            taskMessagePort.sendTaskUpdateMessage(task);
             logger.info("Stop task: " + batchUpdateMessage.getTaskId());
             this.stopTask(batchUpdateMessage.getTaskId());
         }

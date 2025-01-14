@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import pl.agh.logger.Logger;
-import pl.agh.p2pnetwork.model.Node;
+import pl.agh.p2pnetwork.core.model.Node;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;

@@ -1,4 +1,4 @@
-package pl.agh.p2pnetwork.model.dto;
+package pl.agh.p2pnetwork.core.model.dto;
 
 public abstract class BaseMessage {
     private String type;

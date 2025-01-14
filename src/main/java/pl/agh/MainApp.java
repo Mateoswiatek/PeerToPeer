@@ -1,17 +1,18 @@
 package pl.agh;
 
 import pl.agh.middleware.DoneTaskProcessorToFileImpl;
+import pl.agh.middleware.P2PConnectionExtensionHashImpl;
+import pl.agh.middleware.P2PMessageResolverHashImpl;
+import pl.agh.p2pnetwork.core.ports.outbound.P2PExtension;
+import pl.agh.p2pnetwork.core.ports.outbound.P2PMessageResolver;
 import pl.agh.task.TaskControllerImpl;
 import pl.agh.task.factory.DefaultTaskFactory;
 import pl.agh.task.impl.InMemoryBatchRepositoryAdapter;
-import pl.agh.p2pnetwork.model.Node;
+import pl.agh.p2pnetwork.core.model.Node;
 import pl.agh.p2pnetwork.NetworkManager;
-import pl.agh.p2pnetwork.TCPListener;
 import pl.agh.task.impl.InMemoryTaskRepositoryAdapter;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.UUID;
 
 public class MainApp {
@@ -28,32 +29,36 @@ public class MainApp {
             throw new RuntimeException("Użycie: java pl.agh.MainApp <port> [nodeIpFromNetwork nodePortFromNetwork]");
         }
 
-        String ipAddress;
-        try {
-            ipAddress = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            throw new RuntimeException("Nie można pobrać adresu IP hosta", e);
-        }
-        System.out.println("ipAddress: " + ipAddress);
 
         Node myself = new Node(UUID.randomUUID(), "localhost", Integer.parseInt(args[0]));
+        P2PMessageResolver resolver = new P2PMessageResolverHashImpl();
+        P2PExtension extension = new P2PConnectionExtensionHashImpl();
 
         DoneTaskProcessorToFileImpl doneTaskProcessorToFile = DoneTaskProcessorToFileImpl.getInstance(args[0] + ".json");
 
-        NetworkManager networkManager = new NetworkManager(myself);
+        NetworkManager networkManager = new NetworkManager(myself, resolver, extension);
 
-        TaskControllerImpl taskController = new TaskControllerImpl(
-                InMemoryBatchRepositoryAdapter.getInstance(),
-                InMemoryTaskRepositoryAdapter.getInstance(),
-                networkManager,
-                new DefaultTaskFactory(),
-                doneTaskProcessorToFile);
+//        TaskControllerImpl taskController = new TaskControllerImpl(
+//                InMemoryBatchRepositoryAdapter.getInstance(),
+//                InMemoryTaskRepositoryAdapter.getInstance(),
+//                networkManager,
+//                new DefaultTaskFactory(),
+//                doneTaskProcessorToFile);
 
-        new TCPListener(networkManager, taskController, doneTaskProcessorToFile, myself).startAsync();
-        if (args.length == 3) { // Czy podłączamy się do sieci, czy jest to pierwszy node
-            networkManager.connectMyselfToNetwork(args[1], Integer.parseInt(args[2]));
+        // Czy podłączamy się do sieci, czy jest to pierwszy node
+        if (args.length == 3) {
+            networkManager.startNetwork(args[1], Integer.parseInt(args[2]));
         } else {
             System.out.println("Its first node in the network");
+            networkManager.startNetwork();
         }
     }
 }
+
+//        String ipAddress;
+//        try {
+//            ipAddress = InetAddress.getLocalHost().getHostAddress();
+//        } catch (UnknownHostException e) {
+//            throw new RuntimeException("Nie można pobrać adresu IP hosta", e);
+//        }
+//        System.out.println("ipAddress: " + ipAddress);
