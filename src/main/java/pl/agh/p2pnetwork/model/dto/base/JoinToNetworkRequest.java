@@ -12,6 +12,7 @@ import pl.agh.p2pnetwork.model.dto.BaseMessage;
 @Getter
 @EqualsAndHashCode(callSuper = true)
 public class JoinToNetworkRequest extends BaseMessage {
+    //TODO (08.02.2025): tak naprawdę ten newNode nie jest potrzebny, bo i tak wysyłamy Node w bazowym.
     Node newNode;
 
     @JsonCreator

@@ -1,11 +1,11 @@
 package pl.agh.task.factory;
 
 import pl.agh.logger.Logger;
-import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 import pl.agh.task.model.Task;
 import pl.agh.task.model.dto.NewTaskDto;
 import pl.agh.task.model.dto.TaskUpdateMessageDto;
 import pl.agh.task.model.enumerated.TaskStatus;
+import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 
 public class DefaultTaskFactory implements TaskFactory {
     private final Logger logger = Logger.getInstance();

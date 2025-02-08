@@ -5,15 +5,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import pl.agh.middleware.model.BatchUpdateMessage;
 import pl.agh.middleware.model.MemoryDumpMessage;
 import pl.agh.middleware.p2p.model.task.NewTaskRequest;
-import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.middleware.p2p.model.task.TaskDumpMessageRequestMessage;
+import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.p2pnetwork.model.dto.BaseMessage;
 import pl.agh.p2pnetwork.ports.outbound.P2PMessageSerializer;
 
 public class P2PMessageResolverHashImpl extends P2PMessageSerializer {
     @Override
     protected BaseMessage deserializeMessageOverP2P(String jsonMessage) throws JsonProcessingException {
-        logger.info("P2PMessageResolverHashImpl.deserializeMessageOverP2P - invoked.");
+        logger.debug("P2PMessageResolverHashImpl.deserializeMessageOverP2P - invoked.");
 
         JsonNode jsonNode = objectMapper.readTree(jsonMessage);
         String type = jsonNode.get("type").asText();

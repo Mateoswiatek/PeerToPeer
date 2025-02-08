@@ -128,6 +128,7 @@ public class NetworkManagerImpl implements NetworkManager {
                 while ((message = in.readLine()) != null) {
                     BaseMessage baseMessage = messageResolver.deserializeMessage(message);
                     BaseMessage response = messageHandler.apply(baseMessage);
+                    //TODO (08.02.2025): Zamienić to na Optionala zamiast zwracać i sprawdzać nulle.
 //                    if (response != null) {
 //                        logger.info("wysyłamy wiadomość w nowym watku!!!");
 //                        new Thread(() -> out.println(messageResolver.serializeMessage(response))).start();

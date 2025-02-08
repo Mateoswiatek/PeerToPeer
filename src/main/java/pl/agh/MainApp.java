@@ -21,11 +21,3 @@ public class MainApp {
         }
     }
 }
-
-//        String ipAddress;
-//        try {
-//            ipAddress = InetAddress.getLocalHost().getHostAddress();
-//        } catch (UnknownHostException e) {
-//            throw new RuntimeException("Nie można pobrać adresu IP hosta", e);
-//        }
-//        System.out.println("ipAddress: " + ipAddress);

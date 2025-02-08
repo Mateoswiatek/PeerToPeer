@@ -3,10 +3,10 @@ package pl.agh.middleware.task;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import pl.agh.logger.Logger;
-import pl.agh.task.model.dto.BatchUpdateDto;
-import pl.agh.task.ports.outbound.BatchRepositoryPort;
 import pl.agh.task.model.Batch;
+import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.model.enumerated.BatchStatus;
+import pl.agh.task.ports.outbound.BatchRepositoryPort;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -83,17 +83,6 @@ public class InMemoryBatchRepositoryAdapter implements BatchRepositoryPort {
 
     @Override
     public void updateStatusFromDump(List<BatchUpdateDto> batchUpdateDtos) {
-//        Map<UUID, List<BatchUpdateDto>> groupedBatches = batchUpdateDtos.stream()
-//                .collect(Collectors.groupingBy(BatchUpdateDto::getTaskId));
-//
-//        groupedBatches.forEach((uuid, batchUpdateDtosForTask) -> {
-//                List<Batch> batchesDb = this.findAllByTaskId(uuid);
-//                    batchesDb.forEach(batch ->
-//                            batchUpdateDtosForTask.stream().filter(bDump -> batch.getBatchId().equals(bDump.getBatchId())).findFirst().ifPresent(
-//                                    batchUpdateDto -> batch.setStatus(batchUpdateDto.getBatchStatus())
-//                            ));
-//                });
-
         Map<UUID, List<BatchUpdateDto>> groupedBatches = batchUpdateDtos.stream()
                 .collect(Collectors.groupingBy(BatchUpdateDto::getTaskId));
 

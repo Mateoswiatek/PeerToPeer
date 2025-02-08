@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 import pl.agh.task.model.enumerated.TaskStatus;
+import pl.agh.task.ports.outbound.TaskExecutionStrategy;
 
 import java.util.ArrayList;
 import java.util.List;

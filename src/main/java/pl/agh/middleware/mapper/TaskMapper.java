@@ -1,15 +1,18 @@
 package pl.agh.middleware.mapper;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import pl.agh.middleware.model.BatchUpdateMessage;
 import pl.agh.middleware.model.MemoryDumpMessage;
 import pl.agh.middleware.p2p.model.task.NewTaskRequest;
-import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.middleware.p2p.model.task.TaskDumpMessageRequestMessage;
+import pl.agh.middleware.p2p.model.task.TaskUpdateMessage;
 import pl.agh.task.model.dto.*;
 import pl.agh.task.model.enumerated.TaskStatus;
 
 import java.util.List;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TaskMapper {
 
     public static TaskUpdateMessage toTaskUpdateMessage(TaskUpdateMessageDto task) {

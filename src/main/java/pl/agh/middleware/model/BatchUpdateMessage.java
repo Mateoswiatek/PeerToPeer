@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import pl.agh.p2pnetwork.model.dto.BaseMessage;
-import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.model.enumerated.BatchStatus;
 
 import java.util.UUID;

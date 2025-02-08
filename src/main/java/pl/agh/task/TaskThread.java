@@ -5,9 +5,9 @@ import lombok.Getter;
 import pl.agh.logger.Logger;
 import pl.agh.task.mapper.BatchMapper;
 import pl.agh.task.model.Batch;
-import pl.agh.task.model.enumerated.BatchStatus;
-import pl.agh.task.model.dto.BatchUpdateDto;
 import pl.agh.task.model.Task;
+import pl.agh.task.model.dto.BatchUpdateDto;
+import pl.agh.task.model.enumerated.BatchStatus;
 
 import java.util.Optional;
 import java.util.UUID;

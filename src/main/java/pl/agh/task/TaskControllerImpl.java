@@ -2,22 +2,18 @@ package pl.agh.task;
 
 import lombok.AllArgsConstructor;
 import pl.agh.logger.Logger;
-import pl.agh.task.ports.outbound.DoneTaskProcessor;
-import pl.agh.task.factory.TaskFactory;
 import pl.agh.middleware.task.SHA256TaskExecutionStrategy;
-import pl.agh.task.ports.outbound.TaskExecutionStrategy;
+import pl.agh.task.factory.TaskFactory;
 import pl.agh.task.mapper.BatchMapper;
 import pl.agh.task.mapper.TaskMapper;
 import pl.agh.task.model.Batch;
+import pl.agh.task.model.Task;
 import pl.agh.task.model.dto.*;
 import pl.agh.task.model.enumerated.BatchStatus;
-import pl.agh.task.model.Task;
 import pl.agh.task.model.enumerated.TaskStatus;
 import pl.agh.task.observer.TaskStatusLogger;
 import pl.agh.task.ports.inbound.TaskController;
-import pl.agh.task.ports.outbound.BatchRepositoryPort;
-import pl.agh.task.ports.outbound.TaskMessageSenderPort;
-import pl.agh.task.ports.outbound.TaskRepositoryPort;
+import pl.agh.task.ports.outbound.*;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -163,7 +159,8 @@ public class TaskControllerImpl implements TaskController {
         List<TaskUpdateMessageDto> tasks = taskRepositoryPort.findAll().stream().map(TaskMapper::toTaskUpdateMessageDto).toList();
         List<BatchUpdateDto> batches = batchRepository.findAll().stream().filter(b -> !b.getStatus().equals(BatchStatus.DONE)).map(BatchMapper::toBatchUpdateDto).toList();
         MemoryDumpDto memoryDumpDto = new MemoryDumpDto(tasks, batches);
-        logger.info("memoryDumpDto" + memoryDumpDto);
+        logger.info("return memoryDumpDto, batchUpdateDtos.size=" + memoryDumpDto.getBatchUpdateDtos().size());
+        logger.debug("memoryDumpDto" + memoryDumpDto);
         return memoryDumpDto;
     }
 

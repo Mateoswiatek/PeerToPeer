@@ -1,0 +1,14 @@
+[2025-02-08 18:02:16] [INFO] Serwer nasłuchuje na porcie: 5003
+[2025-02-08 18:02:16] [DEBUG] P2PMessageResolverHashImpl.deserializeMessageOverP2P - invoked.
+[2025-02-08 18:02:16] [INFO] updateTasks - invoked
+[2025-02-08 18:02:16] [INFO] updateTask: 403f4647-7511-4130-903b-2834f1504d5a
+[2025-02-08 18:02:16] [INFO] TaskController.updateTask - received done task
+[2025-02-08 18:02:16] [INFO] 0
+[2025-02-08 18:02:16] [INFO] 0
+[2025-02-08 18:02:16] [INFO] updateTasks - done: MemoryDumpDto(taskUpdateMessageDtos=[TaskUpdateMessageDto(taskId=403f4647-7511-4130-903b-2834f1504d5a, passwordHash=216a4438875df831967fc4c6c2b15469a4c6f62dc4d28a2b5cddebddf4cfe5ad, alphabet=abcdoijklms, maxLength=7, maxBatchSize=5000, taskStatus=DONE, result=masloo)], batchUpdateDtos=[])
+[2025-02-08 18:02:17] [INFO] Nodes: [Node(id=6ad3b2b5-fa29-4688-8eba-19f089ef692d, ip=localhost, port=5001), Node(id=365cda00-727c-4ea5-bcc5-086ecb5af1f4, ip=localhost, port=5002)]
+[2025-02-08 18:02:18] [INFO] Nodes: [Node(id=6ad3b2b5-fa29-4688-8eba-19f089ef692d, ip=localhost, port=5001), Node(id=365cda00-727c-4ea5-bcc5-086ecb5af1f4, ip=localhost, port=5002)]
+[2025-02-08 18:02:19] [INFO] Nodes: [Node(id=6ad3b2b5-fa29-4688-8eba-19f089ef692d, ip=localhost, port=5001), Node(id=365cda00-727c-4ea5-bcc5-086ecb5af1f4, ip=localhost, port=5002)]
+[2025-02-08 18:02:20] [INFO] Nodes: [Node(id=6ad3b2b5-fa29-4688-8eba-19f089ef692d, ip=localhost, port=5001), Node(id=365cda00-727c-4ea5-bcc5-086ecb5af1f4, ip=localhost, port=5002)]
+[2025-02-08 18:02:21] [INFO] Nodes: [Node(id=6ad3b2b5-fa29-4688-8eba-19f089ef692d, ip=localhost, port=5001), Node(id=365cda00-727c-4ea5-bcc5-086ecb5af1f4, ip=localhost, port=5002)]
+[2025-02-08 18:02:22] [INFO] Nodes: [Node(id=6ad3b2b5-fa29-4688-8eba-19f089ef692d, ip=localhost, port=5001), Node(id=365cda00-727c-4ea5-bcc5-086ecb5af1f4, ip=localhost, port=5002)]
