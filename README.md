@@ -179,6 +179,3 @@ Run scripts are available in **run.sh**. Task request scripts are available in *
 8. **Add a new node** on port **5003** and verify whether it receives information about the completed task.
 
 ---
-
-This document provides a structured overview of the project, explaining its **architecture, workflow, and usage** while maintaining clarity for further development and integration.
-
