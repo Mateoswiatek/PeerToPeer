@@ -1,94 +1,184 @@
-# Opis
+# P2PBruteforcePassword Project
 
-Projekt zaliczeniowy z przedmiotu Design Patterns, 5 semestr kierunku informatyka i systemy inteligentne, AGH 2025.
+Final project for the **Design Patterns** course, **5th semester of Computer Science and Intelligent Systems**, AGH 2025.
 
-Zasadnicza część kodu została stworzona w jedną noc,
-noc przed końcowym oddaniem projektu, po długim i wyczerpującym balu elektryka.
-Z tego względu kod nadal ma wiele miejsc w których możliwe jest wprowadzenie optymalizacji,
-uproszczeń i refactoringu dla poprawy czytelności. Niektóre takie miejsca zostały oznaczone
-odpowiednim komentarzem TODO.
+The core part of the code was developed in a single night—the night before the final project submission—after an exhausting **Electrician's Ball**. As a result, there are still many areas where optimizations, simplifications, and refactorings could improve readability. Some of these areas are marked with **TODO** comments.
 
+The designed and implemented system is a **Peer-to-Peer (P2P) network** with a built-in business application. The P2P network itself is a **generic, standalone library** that can support various applications.
 
-Zaprojektowanym i zaimplementowanym systemem jest sieć Pear to Pear (P2P) wraz ze zbudowaną na niej aplikacji biznesowej.
-Sama sieć P2P jest uniwersalnym kodem, biblioteką, na której można nadbudować dowolną inną aplikację.
-## System
-### Sieć P2P
-System sieci P2P umożliwia:
-- Tworzenie sieci z pojedynczego node (Startowanie sieci)
-- Dołączanie nowych Node do sieci
-- Aktualizowanie aktywnych Node w sieci (Przed wysłaniem wiadomości do całej sieci, aktualizujemy stan sieci, lazy update)
-- Wykrywanie odłączonych Node w sieci.
+Each generic module (P2P Network, Password Cracker) has its own **set of communication messages (DTO objects)**. This ensures that the modules remain independent and their logic does not mix.
 
+---
 
-Node przed wysłaniem wiadomości "do całej sieci" aktualizuje swoją wiedzę na temat jej stanu, 
-jak i również przed przekazaniem swojej wiedzy do innego node(np tego, który podłącza się do sieci za pośrednictwem omawianego nodea).
-Jest to coś w rodzaju lazy update, aktualizujemy dopiero w momencie, gdy tego potrzebujemy.
+## **System Architecture**
 
-Poniżej przedstawiono jedyny bardziej skomplikowany proces, jakim jest podłączanie nowego Nodea do sieci
-- Nowo dodany node wysyła requesta do Noda znajdującego się w sieci (musi zostać on podany przy starcie nowego node).
+### **P2P Network**
 
-Node będący w sieci:
-- Logika zaczyna się w NetworkManagerImpl.P2PTCPListener.handleAddNewNodeToNetwork
-- Aktualizuje swoją wiedzę na temat sieci (wykrywa i usuwa ze swojej listy odłączone Node)
-- Dodaje do swojej sieci Node, który się podłączył
-- Wysyła update sieci do wszystkich Nodów w sieci (dodając również samego siebie do listy)
-- Wykonuje dodatkową akcję, która jest portem zewnętrznym modułu sieci P2P. W naszym przypadku taką dodatkową akcją jest wysłanie do nowo dodanego Node dumpa wiedzy na temat aplikacji biznesowej
-  (Rozwiązania poprzednich łamanych haseł, dump chunków z aktualnie procesowanych zadań)
+The `p2pnetwork` module is responsible for the structure and management of the **P2P network**.
 
-Komunikaty w sieci są w postaci JSONów.
-Wszystkie komunikaty dziedziczą po klasie bazowej, zawierającej informację o typie wiadomości oraz o nadawcy.
-```
-{"type": "JoinToNetworkRequest" ,"node": {"id": "6ad3b2b5-fa29-4688-8eba-19f089ef692d", "ip": "localhost", "port": 5001}}
-```
+The P2P system enables:
 
-Podstawowe komunikaty
-JoinToNetworkRequest: 
-```
-{"newNode": {"id": "6ad3b2b5-fa29-4688-8eba-19f089ef692d", "ip": "localhost", "port": 5001}}
-```
-UpdateNetworkMessage:
-```
-{"nodes": [{"id": "6ad3b2b5-fa29-4688-8eba-19f089ef692d", "ip": "localhost", "port": 5001}, {"id": "6ad3b2b5-fa29-4688-8eba-19f089ef692e", "ip": "localhost", "port": 5002}]}
-```
+- Creating a network from a **single node** (network initialization).
+- **Adding new nodes** to the network.
+- **Updating active nodes** in the network (before sending a message to the entire network, we update the network state using lazy updates).
+- **Detecting disconnected nodes** in the network.
 
-Ping:
-```
-{"ping":"ping"}
+Before a node sends a message to the entire network, it first updates its knowledge about the current network state. The same happens before a node shares its knowledge with another node (e.g., one that is joining the network). This is a form of **lazy update**—we update only when necessary.
+
+#### **New Node Connection Process**
+
+One of the more complex processes is adding a new node to the network:
+
+1. The new node sends a **request** to an existing node in the network (this node must be provided at startup).
+2. The existing node:
+  - Starts processing the request in `NetworkManagerImpl.P2PTCPListener.handleAddNewNodeToNetwork`.
+  - **Updates its network state** (removes disconnected nodes from its list).
+  - **Adds the new node** to the network.
+  - **Broadcasts a network update** to all nodes (including itself in the list).
+  - Executes an additional **external action**, which in our case is sending a dump of business application data to the new node (previously solved passwords, chunks of ongoing tasks).
+
+#### **Communication in the Network**
+
+Messages in the network are exchanged as **JSON objects**. Every message inherits from a base class containing information about the message type and sender.
+
+**Example Messages:**
+
+```json
+{
+  "type": "JoinToNetworkRequest",
+  "node": {
+    "id": "6ad3b2b5-fa29-4688-8eba-19f089ef692d",
+    "ip":"localhost",
+    "port":5001
+  }
+}
 ```
 
-W kodzie wykorzystano dobre praktyki programistyczne między innymi zasady SOLID oraz wzorce projektowe.
-Kod został w odpowiedni sposób rozdzielony, dzięki czemu projekt jest otwarty na rozwój oraz umożliwia to łatwe wykorzystanie wytworzonego
-kodu go w innych projektach i systemach.
+- **JoinToNetworkRequest:**
 
-### Aplikacja biznesowa
-Nad warstwą sieci P2P została prosta w zrozumieniu aplikacja łamiąca hasła na podstawie ich hashu metodą brute force.
+```json
+{
+  "newNode": {
+    "id": "6ad3b2b5-fa29-4688-8eba-19f089ef692d",
+    "ip": "localhost",
+    "port": 5001
+  }
+}
+```
 
+- **UpdateNetworkMessage:**
 
-Dla danego alfabetu i długości hasła obliczana jest liczba wszystkich możliwości.
+```json
+{
+  "nodes": [
+    {
+      "id": "6ad3b2b5-fa29-4688-8eba-19f089ef692d",
+      "ip": "localhost",
+      "port": 5001
+    },
+    {
+      "id": "6ad3b2b5-fa29-4688-8eba-19f089ef692e",
+      "ip": "localhost",
+      "port": 5002}
+  ]
+}
+```
 
+- **Ping:**
 
-## Użycie
-1. Utwórz sieć nodeów
-2. Wysyłaj requesty z hashami haseł które chcesz złamać do któregokolwiek z aktywnych nodeów w sieci, a cała sieć zacznie je rozwiązywać.
-3. Po skończeniu procesowania hasła w każdym z nodeów zostanie zapisana informacja na temat zrealizowanego zadania wraz z wynikiem = hasłem.
+```json
+{
+  "ping":"ping"
+}
+```
 
-(W założeniach początkowo miało być możliwe przekazywanie callbacku, na który zostanie wysłany POST z wynikiem działania sieci)
+The code follows **good programming practices**, including **SOLID principles** and **design patterns**. The project is designed for scalability, making it easy to integrate and reuse in other systems.
 
+One notable feature is the **external interface**, which triggers a custom action when a new node joins the network. This allows for **business process integration**, such as updating knowledge or starting new operations.
 
-## Example
+---
 
-The run scripts are prepared in the **run.sh** file.
+### **Business Application**
 
-The task request is prepared in the **request.sh** file.
+The `task` module is responsible for **password-cracking task management**.
 
-During the following Use Case, logs and files were generated:
+A simple **brute-force password cracking** application was built on top of the P2P network. By **splitting large tasks into smaller batches**, the system supports parallel execution while exposing APIs for integration with other instances and systems.
+
+Each task runs in a **separate thread**, allowing the controller to handle multiple tasks simultaneously with minimal performance loss.
+
+NewTaskRequest
+```json
+{
+  "type": "NewTaskRequest",
+  "passwordHash": "216a4438875df831967fc4c6c2b15469a4c6f62dc4d28a2b5cddebddf4cfe5ad",
+  "alphabet": "abcdoijklms",
+  "maxLength": 7,
+  "maxBatchSize": 500
+}
+```
+
+#### **Key Features**
+
+- **Creating new tasks** (both fresh tasks and those already being processed by other instances).
+- **Updating task knowledge** (e.g., when a password is found).
+- **Tracking batch states** (important in distributed environments where multiple nodes work on the same task).
+- **Retrieving system knowledge** (useful for monitoring progress and parallel execution).
+
+#### **Workflow Overview**
+
+1. Given a **password hash**, **character set**, and **max password length**, the system calculates the total number of possible combinations.
+2. The system **splits the search space** into batches (storing only numerical ranges for lightweight communication).
+3. The system **processes a random unfinished batch**, sending and receiving updates about task progress.
+
+#### **External Ports**
+
+To enable **customization and integration**, the following external interfaces are available:
+
+- **Repository** – Stores batch and task data, with implementation-dependent persistence.
+- **TaskMessageSender** – Sends task progress updates, customizable based on external system needs.
+- **DoneTaskProcessor** – Defines **post-task actions**, executed multiple times per task (e.g., result storage).
+
+---
+
+### **Middleware**
+
+Middleware is responsible for integrating **two independent modules**:
+
+- **Business application** (password cracking).
+- **P2P network**.
+
+Connected computers in the **P2P network** run instances of the **business application**. The middleware handles **message passing and interface implementation** for both modules.
+
+A key aspect is using **custom message types** that are distinct from the basic P2P network messages. This separation ensures **clear module responsibilities**.
+
+---
+
+## **Usage**
+
+1. **Create a network of nodes**.
+2. **Send requests** containing password hashes to any active node in the network. The entire network will attempt to crack the passwords.
+3. **Once a password is found**, all nodes store the result.
+
+*(Originally, the system was intended to support callbacks for sending results via POST requests—this can be a future extension.)*
+
+---
+
+## **Example**
+
+Run scripts are available in **run.sh**. Task request scripts are available in **request.sh**.
 
 ### **Use Case Flow:**
-1. Start a standalone node on port **5000**.
-2. Send a task request.
-3. Add a new node on port **5001**, connecting it to the existing node on port **5000**.
-4. Wait a few seconds.
-5. Remove the node running on port **5000** (interrupt its operation).
-6. Add a new node on port **5002**, connecting it to the node running on port **5001**.
-7. Nodes **5001** and **5002** should complete the task.
-8. Add a new node on port **5003** and verify whether it receives information about the completed task.
+
+1. **Start a standalone node** on port **5000**.
+2. **Send a password cracking request**.
+3. **Add a new node** on port **5001**, connecting it to **5000**.
+4. **Wait a few seconds**.
+5. **Stop the node** on **5000**.
+6. **Add a new node** on port **5002**, connecting it to **5001**.
+7. **Nodes 5001 and 5002 complete the task**.
+8. **Add a new node** on port **5003** and verify whether it receives information about the completed task.
+
+---
+
+This document provides a structured overview of the project, explaining its **architecture, workflow, and usage** while maintaining clarity for further development and integration.
+
